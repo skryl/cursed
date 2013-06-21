@@ -139,11 +139,13 @@ class Scope < Window
   end
 
   def show_instrument(num)
-    active_panel.hidden_children[num].show
+    ins = active_panel.hidden_children[num]
+    ins && ins.show
   end
 
   def show_panel(num)
-    @body.hidden_children[num].show
+    pan = @body.hidden_children[num]
+    pan && pan.show
   end
 
   # def scroll_instrument(direction)
