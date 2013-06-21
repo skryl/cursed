@@ -141,11 +141,13 @@ class Scope < Window
   def show_instrument(num)
     ins = active_panel.hidden_children[num]
     ins && ins.show
+    switch_mode(:normal)
   end
 
   def show_panel(num)
     pan = @body.hidden_children[num]
     pan && pan.show
+    switch_mode(:normal)
   end
 
   # def scroll_instrument(direction)
