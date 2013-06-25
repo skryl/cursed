@@ -7,11 +7,8 @@ class Window < Canvas
   BORDER_OFFSET = { height: -2, width: -2, top: 1, left: 1 }.freeze
   FLOW_OFFSETS  = { vertical: :top, horizontal: :left}.freeze
   FLOW_DIMS     = { vertical: :height, horizontal: :width }.freeze
+  FLOW_ATTRS    = [:size, :offset].freeze
   DEFAULT_FLOW  = :vertical
-
-  # regex matchers
-  ATTRIBUTE_MATCHER = ATTRIBUTES.join('|').freeze
-  FLOW_MATCHER      = [:flow_size, :flow_offset].join('|').freeze
 
   attr_reader   :children, :title
   attr_accessor :fixed_height, :fixed_width, :fixed_top, :fixed_left
@@ -110,12 +107,38 @@ class Window < Canvas
     get_attribute(attr) + (@border ? BORDER_OFFSET[attr] : 0)
   end
 
+  # creates :height, :width, :top, :left and effective_* readers
+  #
+  ATTRIBUTES.each do |attr|
+    define_method(attr) do
+      get_attribute(attr)
+    end
+
+    define_method("effective_#{attr}") do
+      get_effective_attribute(attr)
+    end
+  end
+
+  # creates :flow_size, :flow_offset and effective_* readers
+  #
+  FLOW_ATTRS.each do |attr|
+    define_method("flow_#{attr}") do
+      get_attribute(decode_flow_attr(attr))
+    end
+
+    define_method("effective_flow_#{attr}") do
+      get_effective_attribute(decode_flow_attr(attr))
+    end
+  end
+
   def update_attributes(offset: false, **attrs)
     attrs.each do |attr, val|
       val = offset ? send(attr) + val.to_i : val
       instance_variable_set("@auto_#{attr}", val) 
     end
   end
+
+# movement
 
   def resize(**params)
     update_attributes(params)
@@ -153,7 +176,7 @@ class Window < Canvas
   end
 
   def draw_border
-    color(selected? && parent_selected? ? :red : :white) { @window.box(?|, ?-) }
+    colorize(selected? && parent_selected? ? :red : :white) { @window.box(?|, ?-) }
   end
 
 # flow 
@@ -205,19 +228,7 @@ class Window < Canvas
 
 # some magic
 
-  def method_missing(symbol, *args, &block)
-    case symbol.to_s
-    when /(effective_)?(#{ATTRIBUTE_MATCHER})/
-      attr = $2.to_sym
-      $1 ? get_effective_attribute(attr) : get_attribute(attr)
-    when /(effective_)?(#{FLOW_MATCHER})/
-      attr = $2.to_sym == :flow_size ? flow_dimension : flow_axis
-      $1 ? get_effective_attribute(attr) : get_attribute(attr)
-    else super(symbol, *args, &block)
-    end
-  end
-
-  def color(color, style: :normal)
+  def colorize(color, style: :normal)
     @window.attron(Curses.color_pair(COLOR[color]|STYLE[style]))
     ret = yield
     @window.attroff(Curses.color_pair(COLOR[color]|STYLE[style]))
@@ -238,6 +249,12 @@ class Window < Canvas
 
   def hidden_child_index
     hidden_children.map.with_index{ |c,i| "#{i}: #{c.title}" }.join(' ')
+  end
+
+private
+
+  def decode_flow_attr(attr)
+    attr == :size ? flow_dimension : flow_axis
   end
 
 end
