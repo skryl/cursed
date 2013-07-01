@@ -1,6 +1,10 @@
-require_relative 'canvas'
+require_relative 'curses_window'
+require_relative 'buffer'
+require 'forwardable'
 
-class Window < Canvas
+class Window
+  extend Forwardable
+  def_delegators :@cwindow, :write, :colorize
 
   ATTRIBUTES    = [:height, :width, :top, :left].freeze
   DEFAULT_SIZE  = { height: 3, width: 3, top: 0, left: 0 }.freeze
@@ -10,29 +14,35 @@ class Window < Canvas
   FLOW_ATTRS    = [:size, :offset].freeze
   DEFAULT_FLOW  = :vertical
 
-  attr_reader   :children, :title
+  attr_reader   :children, :title, :flow
   attr_accessor :fixed_height, :fixed_width, :fixed_top, :fixed_left
   attr_accessor :auto_height, :auto_width, :auto_top, :auto_left
+  def_delegators :@buffer, :puts, :<<
 
   def initialize(**params)
-    @buffer = ''
     @children = []
+    @buffer   = Buffer.new(self)
     @parent = params[:parent]
-    @window = params[:window]
+    @cwindow = params[:window]
     @border = params[:border].nil? ? true : params[:border]
     @flow   = params[:flow] || DEFAULT_FLOW
     @title  = params[:title] || 'window'
-    @visible = true
+    @visible = params[:visible].nil? ? true : params[:visible]
     @selected = false
 
-    unless @window
+    unless @cwindow
       @fixed_height, @fixed_width, @fixed_top, @fixed_left = \
         params.values_at(:height, :width, :top, :left)
-      @window = Curses::Window.new(height, width, top, left)
+      @cwindow = Curses::Window.new(height, width, top, left)
     end
 
     @parent.add_child(self) if @parent
-    _refresh
+  end
+
+  # TODO: need better way to globalize data generator
+  #
+  def htm
+    @htm ||= @parent.htm
   end
 
   def show 
@@ -47,18 +57,17 @@ class Window < Canvas
 
   def visible?; @visible end
   def hidden?; !@visible end
+  def border?; @border end
   def select; @selected = true end
   def unselect; @selected = false end
   def selected?; @selected end
   def parent_selected?; @parent && @parent.selected? end
-  def drawn?; @drawn end
 
 # children
 
   def add_child(child)
     @children << child
     adjust_children
-    _refresh
   end
 
   def visible_children
@@ -100,7 +109,7 @@ class Window < Canvas
     instance_variable_get("@fixed_#{attr}") ||
     instance_variable_get("@auto_#{attr}")  ||
     @parent && @parent.send("effective_#{attr}") ||
-    @window && @window.send(attr) || DEFAULT_SIZE[attr]
+    @cwindow && @cwindow.send(attr) || DEFAULT_SIZE[attr]
   end
 
   def get_effective_attribute(attr)
@@ -148,35 +157,30 @@ class Window < Canvas
     update_attributes(params)
   end
 
-  def _refresh(**opts)
-    @window.resize(height, width)
-    @window.move(top, left)
-    @window.clear
-    draw_border if @border
+  # performs a quick refresh, must call refresh! to eventually draw to the
+  # screen
+  #
+  def refresh
+    @cwindow.resize(height, width)
+    @cwindow.move(top, left)
+    @cwindow.clear
     print_buffer
-    @window.refresh
-    visible_children.each(&:_refresh)
+    draw_border
+    @cwindow.noutrefresh
+    visible_children.each(&:refresh)
   end
 
-  def print_buffer
-    if @border
-      @window.setpos(1,1)
-      width = effective_width
-      sliced_buffer = @buffer.scan(/.{1,#{width}}/)
-      num_lines = [(@buffer.length/width.to_f).ceil, effective_height].min
-
-      num_lines.times do |n|
-        @window << sliced_buffer[n]
-        @window.setpos(@window.cury+1,1)
-      end
-    else
-      @window.setpos(0,0)
-      @window << @buffer
-    end
+  # actually draws to the screen
+  #
+  def refresh!
+    refresh
+    @cwindow.refresh
   end
 
   def draw_border
-    colorize(selected? && parent_selected? ? :red : :white) { @window.box(?|, ?-) }
+    @cwindow.colorize(selected? && parent_selected? ? :red : :white) do 
+      @border ? @cwindow.box(?|, ?-) : @cwindow.marker(?+)
+    end
   end
 
 # flow 
@@ -206,7 +210,6 @@ class Window < Canvas
   def adjust_children
     autosize_children unless autosizable_children.empty?
     autoposition_children
-    _refresh
   end
 
   def autosize_children
@@ -226,25 +229,24 @@ class Window < Canvas
     end
   end
 
-# some magic
-
-  def colorize(color, style: :normal)
-    @window.attron(Curses.color_pair(COLOR[color]|STYLE[style]))
-    ret = yield
-    @window.attroff(Curses.color_pair(COLOR[color]|STYLE[style]))
-    ret
-  end
-
 # printing
 
-  def left_print(content)
-    @buffer = content.to_s
+  def print_buffer
+    @border ? print_buffer_in_border : print_buffer_no_border
   end
 
-  def center_print(content)
+  def print_buffer_in_border
+    @cwindow.setpos(1,1)
+    @buffer.slices.each do |line|
+      @cwindow << line
+      @cwindow.setpos(@cwindow.cury+1,1)
+    end
+    @buffer.clear!
   end
 
-  def right_print(content)
+  def print_buffer_no_border
+    @cwindow.setpos(0,0)
+    @cwindow << @buffer.flush
   end
 
   def hidden_child_index

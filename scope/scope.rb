@@ -4,7 +4,9 @@ require_relative 'panel'
 class Scope < Window
 
   HEADER_HEIGHT = 3
-  FOOTER_HEIGHT = 5
+  FOOTER_HEIGHT = 3
+
+  attr_reader :htm
 
   def initialize(htm, config)
     @mode = :normal
@@ -27,67 +29,73 @@ class Scope < Window
   end
 
   def start_scope
-    init_display do
-      refresh
-      loop do
-        case @mode
-        when :normal
-          case Curses.getch
-          when ?k then change_selected(:up)
-          when ?j then change_selected(:down)
-          when ?l then change_selected(:right)
-          when ?h then change_selected(:left)
-          when ?x then hide_selected_instrument
-          when ?X then hide_selected_panel
-          when ?s then switch_mode(:show)
-          # when ?K then scroll_instrument(:up)
-          # when ?J then scroll_instrument(:down)
-          # when ?L then scroll_instrument(:right)
-          # when ?H then scroll_instrument(:left)
-          when ?f then refresh
-          when ?q then break
-          when ?n then step
-          end
-        when :show
-          case Curses.getch
-          when ?s then switch_mode(:normal)
-          when ?0 then show_instrument(0)
-          when ?1 then show_instrument(1)
-          when ?2 then show_instrument(2)
-          when ?3 then show_instrument(3)
-          when ?4 then show_instrument(4)
-          when ?5 then show_instrument(5)
-          when ?6 then show_instrument(6)
-          when ?7 then show_instrument(7)
-          when ?8 then show_instrument(8)
-          when ?9 then show_instrument(9)
-          when ?) then show_panel(0)
-          when ?! then show_panel(1)
-          when ?@ then show_panel(2)
-          when ?# then show_panel(3)
-          when ?$ then show_panel(4)
-          when ?% then show_panel(5)
-          when ?^ then show_panel(6)
-          when ?& then show_panel(7)
-          when ?* then show_panel(8)
-          when ?( then show_panel(9)
-          end
+    @cwindow.init_display do
+      refresh!
+      loop do 
+        Curses.getch.tap do |input| 
+          react_to_input(input) if input 
         end
       end
     end
   end
 
-  def refresh
-    @header.left_print(@mode.to_s.upcase)
-    @footer.left_print(mode_menu)
-    _refresh
+  def react_to_input(input)
+    case @mode
+    when :normal
+      case input
+      when ?k then change_selected(:up)
+      when ?j then change_selected(:down)
+      when ?l then change_selected(:right)
+      when ?h then change_selected(:left)
+      when ?x then hide_selected_instrument
+      when ?X then hide_selected_panel
+      when ?s then switch_mode(:show)
+      # when ?K then scroll_instrument(:up)
+      # when ?J then scroll_instrument(:down)
+      # when ?L then scroll_instrument(:right)
+      # when ?H then scroll_instrument(:left)
+      when ?f then refresh!
+      when ?q then exit
+      when ?n then step
+      end
+    when :show
+      case Curses.getch
+      when ?s then switch_mode(:normal)
+      when ?0 then show_instrument(0)
+      when ?1 then show_instrument(1)
+      when ?2 then show_instrument(2)
+      when ?3 then show_instrument(3)
+      when ?4 then show_instrument(4)
+      when ?5 then show_instrument(5)
+      when ?6 then show_instrument(6)
+      when ?7 then show_instrument(7)
+      when ?8 then show_instrument(8)
+      when ?9 then show_instrument(9)
+      when ?) then show_panel(0)
+      when ?! then show_panel(1)
+      when ?@ then show_panel(2)
+      when ?# then show_panel(3)
+      when ?$ then show_panel(4)
+      when ?% then show_panel(5)
+      when ?^ then show_panel(6)
+      when ?& then show_panel(7)
+      when ?* then show_panel(8)
+      when ?( then show_panel(9)
+      end
+    end
+    refresh!
+  end
+
+  def refresh!
+    @header << @mode.to_s.upcase
+    @footer << mode_menu
+    super
   end
 
 # modes
 
   def switch_mode(mode)
     @mode = mode 
-    refresh
   end
 
   def normal_mode?; @mode == :normal end
@@ -96,7 +104,7 @@ class Scope < Window
   def mode_menu
     case @mode
     when :normal
-      "random gibberish" * 50
+      ''
     when :show
       %Q(PANELS: #{@body.hidden_child_index} INSTRUMENTS: #{active_panel.hidden_child_index})
     end
@@ -115,7 +123,6 @@ class Scope < Window
     when :left
       @body.select_adjacent_child(:prev)
     end
-    refresh
   end
 
   def visible_panels
@@ -152,14 +159,12 @@ class Scope < Window
 
   # def scroll_instrument(direction)
   #   active_instrument.scroll(direction)
-  #   refresh
   # end
 
 # simulation
 
   def step
-    @htm.step(data)
-    refresh
+    @htm.step
   end
 
 end
