@@ -179,8 +179,14 @@ class Window
 
   def draw_border
     @cwindow.colorize(selected? && parent_selected? ? :red : :white) do 
-      @border ? @cwindow.box(?|, ?-) : @cwindow.marker(?+)
+      @border ? (@cwindow.box(?|, ?-); draw_title) : @cwindow.marker(?+)
     end
+  end
+
+  def draw_title
+    title = "[#{@title}]"
+    left = (width - title.length)/2
+    write(0, left, title)
   end
 
 # flow 
@@ -247,10 +253,6 @@ class Window
   def print_buffer_no_border
     @cwindow.setpos(0,0)
     @cwindow << @buffer.flush
-  end
-
-  def hidden_child_index
-    hidden_children.map.with_index{ |c,i| "#{i}: #{c.title}" }.join(' ')
   end
 
 private

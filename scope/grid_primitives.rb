@@ -38,9 +38,9 @@ module GridPrimitives
     [rows, cols, cells]
   end
 
-  def minimal_grid(row,col,rows,cols,size)
+  def minimal_grid(row,col,rows,cols,size,vscroll,hscroll)
     cells = []
-    hscroll, vscroll = 0, 0
+    hscroll, vscroll = hscroll, vscroll
 
     idx_div = ' ' * (size/2)
     idx_size = idx_div.size+2
@@ -49,11 +49,11 @@ module GridPrimitives
     cell_size = cell.size
 
     # print top indices
-    col_indices = (0...cols).map{|i| format_val(i)}.join(idx_div)
-    write(row, col, cell_div + col_indices)
+    col_indices = (hscroll...hscroll+cols).map{|i| format_val(i)}.join(idx_div)
+    write(row, col, cell_div + cell_div + col_indices)
 
     # print side indices
-    row_indices = (0...rows).map{|i| format_val(i)}
+    row_indices = (vscroll...vscroll+rows).map{|i| format_val(i)}
     row_indices.each.with_index { |ridx, i| write(row+1+i, col, ridx) }
 
     # print cells

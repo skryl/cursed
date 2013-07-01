@@ -4,7 +4,7 @@ require_relative 'panel'
 class Scope < Window
 
   HEADER_HEIGHT = 3
-  FOOTER_HEIGHT = 3
+  FOOTER_HEIGHT = 4
 
   attr_reader :htm
 
@@ -13,14 +13,13 @@ class Scope < Window
     super(window: Curses.stdscr, border: false)
 
     @htm = htm
-    @header = Window.new(parent: self, title: :header, border: true, height: HEADER_HEIGHT)
+    @header = Window.new(parent: self, title: :status, border: true, height: HEADER_HEIGHT)
     @body   = Window.new(parent: self, title: :body, border: false, flow: :horizontal) 
     @panels = config[:panels].map { |config| 
-      Panel.new(config, title: config[:title], parent: @body, 
-        border: false, top: @header.top + @header.height, 
-        height: self.height - HEADER_HEIGHT - FOOTER_HEIGHT - 2) }
-    @footer = Window.new(parent: self, title: :footer, border: true, height: FOOTER_HEIGHT, 
-      top: self.top + self.height - FOOTER_HEIGHT - 1)
+      Panel.new(config, parent: @body, border: false, top: @header.top + @header.height, 
+        height: self.effective_height - @header.height) }
+    @footer = Window.new(parent: self, title: :menu, border: true, visible: false,
+        height: FOOTER_HEIGHT, top: self.top + self.height - FOOTER_HEIGHT)
 
     @left_panel  = visible_panels[0]
     @right_panel = visible_panels[1]
@@ -50,16 +49,16 @@ class Scope < Window
       when ?x then hide_selected_instrument
       when ?X then hide_selected_panel
       when ?s then switch_mode(:show)
-      # when ?K then scroll_instrument(:up)
-      # when ?J then scroll_instrument(:down)
-      # when ?L then scroll_instrument(:right)
-      # when ?H then scroll_instrument(:left)
+      when ?K then scroll_instrument(:up)
+      when ?J then scroll_instrument(:down)
+      when ?L then scroll_instrument(:right)
+      when ?H then scroll_instrument(:left)
       when ?f then refresh!
       when ?q then exit
       when ?n then step
       end
     when :show
-      case Curses.getch
+      case input
       when ?s then switch_mode(:normal)
       when ?0 then show_instrument(0)
       when ?1 then show_instrument(1)
@@ -81,33 +80,50 @@ class Scope < Window
       when ?& then show_panel(7)
       when ?* then show_panel(8)
       when ?( then show_panel(9)
+      when ?q then exit
       end
     end
     refresh!
   end
 
-  def refresh!
-    @header << @mode.to_s.upcase
-    @footer << mode_menu
+  def refresh
+    @header << header_content
+    @footer << menu_content
     super
   end
 
 # modes
 
   def switch_mode(mode)
+    case mode
+    when :show
+      @footer.show
+    when :normal
+      @footer.hide
+    end
     @mode = mode 
   end
 
   def normal_mode?; @mode == :normal end
   def show_mode?; @mode == :show end
 
-  def mode_menu
+# header / footer
+  
+  def header_content
+    "mode: #{@mode.upcase}  columns: #{HTM::COLUMNS}  inputs: #{HTM::INPUTS}"
+  end
+
+  def menu_content
     case @mode
     when :normal
       ''
     when :show
-      %Q(PANELS: #{@body.hidden_child_index} INSTRUMENTS: #{active_panel.hidden_child_index})
+      %Q(PANELS: #{hidden_child_index(@body)} INSTRUMENTS: #{hidden_child_index(active_panel)})
     end
+  end
+
+  def hidden_child_index(window)
+    window.hidden_children.map.with_index{ |c,i| "[#{i}](#{c.title})" }.join(' ')
   end
 
 # panels
@@ -157,9 +173,9 @@ class Scope < Window
     switch_mode(:normal)
   end
 
-  # def scroll_instrument(direction)
-  #   active_instrument.scroll(direction)
-  # end
+  def scroll_instrument(direction)
+    active_instrument.scroll(direction)
+  end
 
 # simulation
 

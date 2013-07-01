@@ -9,12 +9,12 @@ class FullGrid < Grid
 
 private
 
-  def draw
+  def draw(**opts)
     quick_grid
   end
 
-  def quick_grid
-    grid(0, 0, rows-1, cols, @cell_size)
+  def quick_grid(**opts)
+    grid(1, 1, rows, cols, @cell_size)
   end
 
 end

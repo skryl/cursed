@@ -26,13 +26,13 @@ class Grid
   def cols; width  / @cratio end
 
   def max_rows
-    @data_size && (@data_size / cols).ceil || Infinity
+    @data_size && (@data_size / cols.to_f).ceil || Infinity
   end
 
-  def display(streams)
+  def display(streams, **opts)
     stream1, stream2 = streams
     @data_size = stream1.length
-    update_coords(draw)
+    update_coords(draw(opts))
     @cells.each.with_index do |(r,c),i| 
       val = format_val(stream1[i])
       clr = (stream2 && !stream2[i].empty?) ? @alt_fg : @fg

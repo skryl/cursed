@@ -34,7 +34,7 @@ SCOPE_CONFIG = { panels: [
      mapfs: [lambda { |s| s.input.index }, 
              lambda { |s| s.active? ? '#' : '' }]} 
   ]}, 
-  { title: :panel3, visible: true, selected: false, instruments: [
+  { title: :panel3, visible: false, selected: false, instruments: [
     {title: :activity, fg: :red, bg: :blue, type: :basic, visible: true,
      dataf: lambda { |htm| htm.columns }, 
      mapfs: [lambda { |c| c.active? ? '#' : ''}]},

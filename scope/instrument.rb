@@ -4,11 +4,12 @@ require_relative 'minimal_grid'
 class Instrument < Window
 
   WIDTH = 20
+  SCROLL_AMT = 5
 
   attr_reader :title, :vscroll, :hscroll, :rows, :cols, :coords, :grid
 
   def initialize(config, **opts)
-    super(opts)
+    super(config.merge(opts))
     @type = config[:type]
     @view = config[:dataf]
     @maps = config[:mapfs]
@@ -16,7 +17,8 @@ class Instrument < Window
       MinimalGrid.new(self, config) : 
       FullGrid.new(self, config)
 
-    sync
+    @data = @view[htm]
+    @flat_data = @data.flatten
     @nested = @data.first.is_a?(Array)
     @vscroll = 0
     @hscroll = 0
@@ -29,15 +31,10 @@ class Instrument < Window
 
   def minimal?; @type == :minimal end
 
-  def sync
-    @data = @view[htm]
-    @flat_data = @data.flatten
-  end
-
   def refresh
     super
-    @grid.display(streams)
-    @cwindow.refresh
+    @grid.display(streams, vscroll: @vscroll, hscroll: @hscroll)
+    @cwindow.noutrefresh
   end
 
   def streams
@@ -59,14 +56,14 @@ class Instrument < Window
     case direction
     when :down
       return if @data_rows < @grid.rows
-      @vscroll = [@vscroll + 1, @data_rows-@grid.rows].min
+      @vscroll = [@vscroll + SCROLL_AMT, @data_rows-@grid.rows].min
     when :up
-      @vscroll = [@vscroll - 1, 0].max 
+      @vscroll = [@vscroll - SCROLL_AMT, 0].max 
     when :right
       return if @data_cols < @grid.cols
-      @hscroll = [@hscroll + 1, @data_cols-@grid.cols].min
+      @hscroll = [@hscroll + SCROLL_AMT, @data_cols-@grid.cols].min
     when :left
-      @hscroll = [@hscroll - 1, 0].max 
+      @hscroll = [@hscroll - SCROLL_AMT, 0].max 
     end
   end
 
