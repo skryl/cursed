@@ -11,8 +11,8 @@ class Scope < Window
   def initialize(htm, config)
     @mode = :normal
     super(window: Curses.stdscr, border: false)
-
     @htm = htm
+
     @header = Window.new(parent: self, title: :status, border: true, height: HEADER_HEIGHT)
     @body   = Window.new(parent: self, title: :body, border: false, flow: :horizontal) 
     @panels = config[:panels].map { |config| 

@@ -28,7 +28,7 @@ class Window
     @flow   = params[:flow] || DEFAULT_FLOW
     @title  = params[:title] || 'window'
     @visible = params[:visible].nil? ? true : params[:visible]
-    @selected = false
+    @selected = params[:selected].nil? ? false : params[:selected]
 
     unless @cwindow
       @fixed_height, @fixed_width, @fixed_top, @fixed_left = \
@@ -219,7 +219,7 @@ class Window
   end
 
   def autosize_children
-    autosizable_count = autosizable_children.size
+    autosizable_count = autosizable_children.count
     new_size = flow_space.to_f / autosizable_count
     size_fix = ((new_size % 1) * autosizable_count).to_i
     autosizable_children.each { |c| c.resize(flow_dimension => new_size.to_i) }
