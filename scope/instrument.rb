@@ -15,12 +15,12 @@ class Instrument < Window
     @grid = minimal? ? 
       MinimalGrid.new(self, config) : 
       FullGrid.new(self, config)
-    @data = @view[htm]
   end
 
   def minimal?; @type == :minimal end
 
   def streams
+    @data = @view[htm]
     if @data.first.is_a? Array
       @maps.map { |streamf| @data.map { |r| r.map(&streamf) } }
     else

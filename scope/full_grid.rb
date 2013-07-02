@@ -10,7 +10,7 @@ class FullGrid < Grid
 private
 
   def draw
-    grid(1, 1, @rows, @cols, @cell_size)
+    grid(1, 1, @rows, @cols, @cell_size, @vscroll, @hscroll)
   end
 
 end

@@ -4,9 +4,9 @@ require 'forwardable'
 class Column
   extend Forwardable
 
-  INPUT_SIZE = 40
+  INPUT_SIZE = 30
   MIN_OVERLAP = 5
-  DESIRED_LOCAL_ACTIVITY = 5
+  DESIRED_LOCAL_ACTIVITY = 3
 
   def_delegators :@htm, :inhibition_radius, :columns, :num_columns, :cycles, :learning
   def_delegators :@pdendrite, :synapses
@@ -100,7 +100,7 @@ class Column
   def neighbors
     idx_min = index - inhibition_radius
     idx_min = (idx_min < 0) ? num_columns + idx_min : idx_min
-    columns.rotate(idx_min).take(inhibition_radius*2)
+    columns.rotate(idx_min).take(inhibition_radius*2+1) - [self]
   end
 
   def to_h

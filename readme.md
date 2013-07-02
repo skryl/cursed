@@ -16,8 +16,9 @@
 * x - hide instrument
 * X - hide panel
 * s - switch to 'show' mode
-* f - force refresh
 * n - step simulation
+* N - step simulation 10 times
+* f - step simulation 100 times
 * q - exit
 
 ### Show Mode

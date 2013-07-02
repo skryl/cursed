@@ -16,6 +16,7 @@ class HTM
     @inhibition_radius = INIT_INHIBITION_RADIUS
     @inputs = Array.new(@num_inputs) { |i| Input.new(i) } 
     @columns = Array.new(@num_columns) { Column.new(self, @inputs) }
+    @active_columns = []
   end
 
   def step(new_input=nil)
@@ -36,6 +37,10 @@ class HTM
     learning = true
     yield
     learning = false
+  end
+
+  def activity_ratio
+    (@active_columns.count / num_columns.to_f).round(2)
   end
 
   def tune_inhibition_radius

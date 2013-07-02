@@ -24,13 +24,25 @@ module GridPrimitives
     rect(row,col,row+side,col+side)
   end
 
-  def grid(row,col,rows,cols,size)
+  def grid(row,col,rows,cols,size,vscroll,hscroll)
     cells = []
+
+    idx_div = ' ' * (size/2)
+    cell_div = '  ' * (size/2)
+
+    # print top indices
+    col_indices = (hscroll...hscroll+cols).map{|i| format_val(i)}.join(idx_div)
+    write(row, col, cell_div + col_indices)
+
+    # print side indices
+    row_indices = (vscroll...vscroll+rows).map{|i| format_val(i)}
+    row_indices.each.with_index { |ridx, i| write(row+2+(i*2), col, ridx) }
+
     rows.times do |r|
       rshift = (size/2 - 1) * r
       cols.times do |c|
         cshift = (size-1) * c
-        rstart, cstart = row+r+rshift, col+c+cshift
+        rstart, cstart = row+r+rshift+1, col+c+cshift+2
         cells[r * cols + c] = [rstart+1,cstart+size/2]
         sqr(rstart,cstart,size)
       end

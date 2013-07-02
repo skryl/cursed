@@ -20,6 +20,10 @@ SCOPE_CONFIG = { panels: [
      dataf: lambda { |htm| htm.columns }, 
      streamfs: [lambda { |c| c.overlap.to_i }]}, 
 
+    {title: :min_local_activity, fg: :blue, bg: :green, type: :basic, visible: true,
+     dataf: lambda { |htm| htm.columns }, 
+     streamfs: [lambda { |c| c.min_local_activity.to_i }]},
+
     {title: :boost, fg: :red, bg: :yellow, type: :basic, visible: false,
      dataf: lambda { |htm| htm.columns }, 
      streamfs: [lambda { |c| c.boost }]},
@@ -34,13 +38,13 @@ SCOPE_CONFIG = { panels: [
      streamfs: [lambda { |s| s.input.index }, 
                 lambda { |s| s.active? ? '#' : '' }]} 
   ]}, 
-  { title: :synapse_permancence, visible: true, selected: false, instruments: [
+  { title: :synapse_permancence, visible: false, selected: false, instruments: [
     {title: :synapse_perm, fg: :green, bg: :yellow, type: :minimal, visible: true,
      dataf: lambda { |htm| htm.columns.map(&:synapses)}, 
      streamfs: [lambda { |s| s.permanence }, 
                 lambda { |s| s.active? ? '#' : '' }]} 
   ]}, 
-  { title: :neighbor_indices, visible: true, selected: false, instruments: [
+  { title: :neighbor_indices, visible: false, selected: false, instruments: [
     {title: :neighbors, fg: :green, bg: :yellow, type: :minimal, visible: true,
      dataf: lambda { |htm| htm.columns.map(&:neighbors)}, 
      streamfs: [lambda { |n| n.index }, 

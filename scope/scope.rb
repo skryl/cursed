@@ -53,10 +53,10 @@ class Scope < Window
       when ?J then scroll_instrument(:down)
       when ?L then scroll_instrument(:right)
       when ?H then scroll_instrument(:left)
-      when ?f then refresh!
       when ?q then exit
       when ?n then step
       when ?N then step(10)
+      when ?f then step(100)
       end
     when :show
       case input
@@ -113,7 +113,7 @@ class Scope < Window
   def header_content
     <<-eos
 mode: #{@mode.upcase}  learning: #{@htm.learning}  columns: #{@htm.num_columns}  inputs: #{@htm.num_inputs}  input_size: #{Column::INPUT_SIZE}  min_overlap: #{Column::MIN_OVERLAP}  desired_local_activity: #{Column::DESIRED_LOCAL_ACTIVITY}
-cycles: #{@htm.cycles}  ir: #{@htm.inhibition_radius}
+cycles: #{@htm.cycles}  ir: #{@htm.inhibition_radius}  activity_ratio: #{@htm.activity_ratio}
     eos
   end
 
