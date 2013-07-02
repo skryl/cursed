@@ -8,7 +8,7 @@ class Column
   MIN_OVERLAP = 5
   DESIRED_LOCAL_ACTIVITY = 5
 
-  def_delegators :@htm, :inhibition_radius, :columns, :cycles, :learning
+  def_delegators :@htm, :inhibition_radius, :columns, :num_columns, :cycles, :learning
   def_delegators :@pdendrite, :synapses
   attr_reader    :boost, :input_indices
 
@@ -26,6 +26,8 @@ class Column
     end
   end
 
+# learning
+
   def tune_proximal_dendrite
     @pdendrite.tune_synapses
   end
@@ -37,15 +39,15 @@ class Column
     tune_permanence
   end
 
+# boost overlap
+
   def tune_overlap_boost
     boost_delta = active_duty_cycle - min_duty_cycle
     @boost = (boost_delta > 0) ? 1.0 : (@boost + boost_delta)
   end
 
-  def tune_permanence
-    if overlap_duty_cycle < min_duty_cycle
-      @pdendrite.strengthen_all!
-    end
+  def active_duty_cycle
+    @active_count / cycles
   end
 
   def min_duty_cycle
@@ -56,10 +58,12 @@ class Column
     neighbors.map { |n| n.active_duty_cycle }.max
   end
 
-# cycle tuning
-  
-  def active_duty_cycle
-    @active_count / cycles
+# boost permanence
+
+  def tune_permanence
+    if overlap_duty_cycle < min_duty_cycle
+      @pdendrite.boost_all!
+    end
   end
 
   def overlap_duty_cycle
@@ -68,13 +72,13 @@ class Column
   
 # overlap
 
-  def receptive_field_size
+  def raw_overlap
     @pdendrite.overlap
   end
 
   def overlap
-    rfs = self.receptive_field_size 
-    (rfs < MIN_OVERLAP ? 0 : rfs * @boost).tap do |overlap|
+    overlap = raw_overlap
+    (overlap < MIN_OVERLAP ? 0 : overlap * @boost).tap do |overlap|
       @overlap_count += 1 if learning && overlap > 0
     end
   end
@@ -94,13 +98,13 @@ class Column
   end
 
   def neighbors
-    idx_min = [index - inhibition_radius, 0].max
-    idx_max = [index + inhibition_radius, columns.size - 1].min
-    columns[idx_min...idx_max]
+    idx_min = index - inhibition_radius
+    idx_min = (idx_min < 0) ? num_columns + idx_min : idx_min
+    columns.rotate(idx_min).take(inhibition_radius*2)
   end
 
   def to_h
-    { rfs: receptive_field_size, 
+    { raw_overlap: raw_overlap, 
       overlap: overlap, 
       boost: @boost,
       num_neighbors: neighbors.size,

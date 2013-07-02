@@ -3,7 +3,7 @@ require_relative 'panel'
 
 class Scope < Window
 
-  HEADER_HEIGHT = 3
+  HEADER_HEIGHT = 4
   FOOTER_HEIGHT = 4
 
   attr_reader :htm
@@ -56,6 +56,7 @@ class Scope < Window
       when ?f then refresh!
       when ?q then exit
       when ?n then step
+      when ?N then step(10)
       end
     when :show
       case input
@@ -110,7 +111,10 @@ class Scope < Window
 # header / footer
   
   def header_content
-    "mode: #{@mode.upcase}  columns: #{HTM::COLUMNS}  inputs: #{HTM::INPUTS}"
+    <<-eos
+mode: #{@mode.upcase}  learning: #{@htm.learning}  columns: #{@htm.num_columns}  inputs: #{@htm.num_inputs}  input_size: #{Column::INPUT_SIZE}  min_overlap: #{Column::MIN_OVERLAP}  desired_local_activity: #{Column::DESIRED_LOCAL_ACTIVITY}
+cycles: #{@htm.cycles}  ir: #{@htm.inhibition_radius}
+    eos
   end
 
   def menu_content
@@ -179,8 +183,8 @@ class Scope < Window
 
 # simulation
 
-  def step
-    @htm.step
+  def step(n=1)
+    n.times { @htm.step }
   end
 
 end

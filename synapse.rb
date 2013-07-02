@@ -7,7 +7,7 @@ class Synapse
   PERMANENCE_INC = 0.01
   PERMANENCE_DEC = 0.01
 
-  attr_reader :input
+  attr_reader :input, :permanence
 
   def initialize(input)
     @input = input
@@ -20,6 +20,10 @@ class Synapse
 
   def strengthen!
     @permanence = [@permanence + PERMANENCE_INC, 1.0].min
+  end
+
+  def boost!
+    @permanence = [@permanence + (0.1 * CONNECTED_PERM), 1.0].min
   end
 
   def weaken!

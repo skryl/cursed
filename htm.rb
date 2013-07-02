@@ -28,7 +28,7 @@ class HTM
       @active_columns = @columns.select { |c| c.active? }
       @active_columns.each { |c| c.tune_proximal_dendrite }
       @columns.each { |c| c.tune_boost }
-      # tune_inhibition_radius
+      tune_inhibition_radius
     }
   end
 
@@ -39,11 +39,11 @@ class HTM
   end
 
   def tune_inhibition_radius
-    @inhibition_radius = average_rfs
+    @inhibition_radius = average_receptive_field_size
   end
 
-  def average_rfs
-    @columns.reduce(0) { |a,c| a + c.receptive_field_size } / @columns.size
+  def average_receptive_field_size
+    @columns.reduce(0) { |a,c| a + c.raw_overlap} / @columns.count
   end
 
   def to_h

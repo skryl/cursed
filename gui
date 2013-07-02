@@ -6,15 +6,15 @@ require_relative 'htm'
 require_relative 'scope/scope'
 
 SCOPE_CONFIG = { panels: [
-  { title: :panel1, visible: true, selected: true, instruments: [
+  { title: :stats, visible: true, selected: true, instruments: [
 
     {title: :activity, fg: :red, bg: :blue, type: :basic, visible: true,
      dataf: lambda { |htm| htm.columns }, 
      streamfs: [lambda { |c| c.active? ? '#' : ''}]},
 
-    {title: :rfs, fg: :white, bg: :yellow, type: :basic, visible: true,
+    {title: :raw_overlap, fg: :white, bg: :yellow, type: :basic, visible: true,
      dataf: lambda { |htm| htm.columns }, 
-     streamfs: [lambda { |c| c.receptive_field_size.to_i }]}, 
+     streamfs: [lambda { |c| c.raw_overlap.to_i }]}, 
 
     {title: :overlap, fg: :white, bg: :green, type: :basic, visible: true,
      dataf: lambda { |htm| htm.columns }, 
@@ -28,25 +28,24 @@ SCOPE_CONFIG = { panels: [
      dataf: lambda { |htm| htm.inputs }, 
      streamfs: [lambda { |c| c.active? ? '#' : '' }]}
   ]}, 
-  { title: :panel2, visible: true, selected: false, instruments: [
-    {title: :synapses, fg: :green, bg: :yellow, type: :minimal, visible: true,
+  { title: :synapse_indices, visible: true, selected: false, instruments: [
+    {title: :synapse_indices, fg: :green, bg: :yellow, type: :minimal, visible: true,
      dataf: lambda { |htm| htm.columns.map(&:synapses)}, 
      streamfs: [lambda { |s| s.input.index }, 
                 lambda { |s| s.active? ? '#' : '' }]} 
   ]}, 
-  { title: :panel3, visible: false, selected: false, instruments: [
-    {title: :activity, fg: :red, bg: :blue, type: :basic, visible: true,
-     dataf: lambda { |htm| htm.columns }, 
-     streamfs: [lambda { |c| c.active? ? '#' : ''}]},
-
-    {title: :rfs, fg: :white, bg: :yellow, type: :basic, visible: true,
-     dataf: lambda { |htm| htm.columns }, 
-     streamfs: [lambda { |c| c.receptive_field_size.to_i }]}, 
-
-    {title: :overlap, fg: :white, bg: :green, type: :basic, visible: true,
-     dataf: lambda { |htm| htm.columns }, 
-     streamfs: [lambda { |c| c.overlap.to_i }]} 
-  ]}
+  { title: :synapse_permancence, visible: true, selected: false, instruments: [
+    {title: :synapse_perm, fg: :green, bg: :yellow, type: :minimal, visible: true,
+     dataf: lambda { |htm| htm.columns.map(&:synapses)}, 
+     streamfs: [lambda { |s| s.permanence }, 
+                lambda { |s| s.active? ? '#' : '' }]} 
+  ]}, 
+  { title: :neighbor_indices, visible: true, selected: false, instruments: [
+    {title: :neighbors, fg: :green, bg: :yellow, type: :minimal, visible: true,
+     dataf: lambda { |htm| htm.columns.map(&:neighbors)}, 
+     streamfs: [lambda { |n| n.index }, 
+                lambda { |n| n.active? ? '#' : '' }]} 
+  ]} 
 ]}
 
 PATTERN = [[0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1],

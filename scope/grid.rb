@@ -71,8 +71,8 @@ private
     stream = stream.first.is_a?(Array) ?
       stream : stream.each_slice(@cols).to_a
 
-    stream[@vscroll..vscroll_end].flat_map do |r| 
-      r[@hscroll..hscroll_end]
+    stream[@vscroll...vscroll_end].flat_map do |r| 
+      r[@hscroll...hscroll_end]
     end
   end
 

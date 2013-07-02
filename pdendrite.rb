@@ -16,8 +16,8 @@ class PDendrite
     inactive_synapses.each { |syn| syn.weaken! }
   end
 
-  def strengthen_all!
-    @synapses.each { |syn| syn.strengthen! }
+  def boost_all!
+    @synapses.each { |syn| syn.boost! }
   end
 
   def active_synapses
