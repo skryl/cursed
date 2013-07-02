@@ -32,7 +32,7 @@ SCOPE_CONFIG = { panels: [
     {title: :synapses, fg: :green, bg: :yellow, type: :minimal, visible: true,
      dataf: lambda { |htm| htm.columns.map(&:synapses)}, 
      streamfs: [lambda { |s| s.input.index }, 
-             lambda { |s| s.active? ? '#' : '' }]} 
+                lambda { |s| s.active? ? '#' : '' }]} 
   ]}, 
   { title: :panel3, visible: false, selected: false, instruments: [
     {title: :activity, fg: :red, bg: :blue, type: :basic, visible: true,

@@ -35,7 +35,7 @@ module GridPrimitives
         sqr(rstart,cstart,size)
       end
     end
-    [rows, cols, cells]
+    cells
   end
 
   def minimal_grid(row,col,rows,cols,size,vscroll,hscroll)
@@ -64,7 +64,7 @@ module GridPrimitives
         cells[r * cols + c] = [rpos, cpos+1]
       end
     end
-    [rows, cols, cells]
+    cells
   end
 
 end

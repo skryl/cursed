@@ -4,7 +4,7 @@ require 'forwardable'
 class Column
   extend Forwardable
 
-  INPUT_SIZE = 30
+  INPUT_SIZE = 40
   MIN_OVERLAP = 5
   DESIRED_LOCAL_ACTIVITY = 5
 

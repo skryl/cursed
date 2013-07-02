@@ -9,12 +9,8 @@ class MinimalGrid < Grid
 
 private
 
-  def draw(**opts)
-    quick_minimal_grid(opts)
-  end
-
-  def quick_minimal_grid(**opts)
-    minimal_grid(1, 1, rows-1, cols-1, @cell_size, opts[:vscroll], opts[:hscroll])
+  def draw
+    minimal_grid(1, 1, @rows, @cols, @cell_size, @vscroll, @hscroll)
   end
 
 end
