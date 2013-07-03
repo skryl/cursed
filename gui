@@ -17,19 +17,23 @@ SCOPE_CONFIG = { screens: [
        dataf: lambda { |htm| htm.columns }, 
        streamfs: [lambda { |c| c.raw_overlap }]}, 
 
+      {title: :inputs, fg: :red, bg: :green, type: :full, visible: true,
+       dataf: lambda { |htm| htm.inputs }, 
+       streamfs: [lambda { |c| c.active? ? '#' : '' }]}
+    ]},
+    { title: :overlap, visible: true, instruments: [
+
       {title: :overlap, fg: :green, bg: :yellow, type: :full, cell_size: 5, visible: true,
        dataf: lambda { |htm| htm.columns }, 
        streamfs: [lambda { |c| c.overlap }]}, 
 
       {title: :min_local_activity, fg: :blue, bg: :green, type: :full, cell_size: 5, visible: true,
        dataf: lambda { |htm| htm.columns }, 
-       streamfs: [lambda { |c| c.min_local_activity }]},
-
-      {title: :inputs, fg: :red, bg: :green, type: :full, visible: true,
-       dataf: lambda { |htm| htm.inputs }, 
-       streamfs: [lambda { |c| c.active? ? '#' : '' }]}
-    ]}, 
-    { title: :boost, visible: true, instruments: [
+       streamfs: [lambda { |c| c.min_local_activity }]}
+    ]}
+  ]},
+  { title: 2, panels: [
+    { title: :counts, visible: true, instruments: [
       {title: :active_count, fg: :yellow, bg: :green, type: :full, visible: true,
        dataf: lambda { |htm| htm.columns }, 
        streamfs: [lambda { |c| c.active_count }]},
@@ -38,19 +42,22 @@ SCOPE_CONFIG = { screens: [
        dataf: lambda { |htm| htm.columns }, 
        streamfs: [lambda { |c| c.overlap_count }]},
 
+      {title: :boost, fg: :red, bg: :yellow, type: :full, cell_size: 3,cell_size: 3, visible: true,
+       dataf: lambda { |htm| htm.columns }, 
+       streamfs: [lambda { |c| c.boost }]}
+    ]},
+    { title: :boost, visible: true, instruments: [
       {title: :active_duty_cycle, fg: :green, bg: :yellow, type: :full, cell_size: 4, visible: true,
        dataf: lambda { |htm| htm.columns }, 
        streamfs: [lambda { |c| c.active_duty_cycle.round(2) }]},
 
       {title: :overlap_duty_cycle, fg: :green, bg: :yellow, type: :full, cell_size: 4, visible: true,
        dataf: lambda { |htm| htm.columns }, 
-       streamfs: [lambda { |c| c.overlap_duty_cycle.round(2) }]},
+       streamfs: [lambda { |c| c.overlap_duty_cycle.round(2) }]}
 
-      {title: :boost, fg: :red, bg: :yellow, type: :full, cell_size: 3,cell_size: 3, visible: true,
-       dataf: lambda { |htm| htm.columns }, 
-       streamfs: [lambda { |c| c.boost }]},
-    ]}]}, 
-  { title: 2, panels: [
+    ]}
+  ]}, 
+  { title: 3, panels: [
     { title: :synapse_indices, visible: true, instruments: [
       {title: :synapse_indices, fg: :green, bg: :yellow, type: :minimal, visible: true,
        dataf: lambda { |htm| htm.columns.map(&:synapses)}, 
@@ -62,13 +69,16 @@ SCOPE_CONFIG = { screens: [
        dataf: lambda { |htm| htm.columns.map(&:synapses)}, 
        streamfs: [lambda { |s| perm = (s.permanence * 100).to_i; perm == 100 ? '##' : perm }, 
                   lambda { |s| s.active? ? '#' : '' }]} 
-    ]}, 
+    ]} 
+  ]},
+  { title: 4, panels: [
     { title: :neighbor_indices, visible: true, instruments: [
       {title: :neighbors, fg: :green, bg: :yellow, type: :minimal, visible: true,
        dataf: lambda { |htm| htm.columns.map(&:neighbors)}, 
        streamfs: [lambda { |n| n.index }, 
                   lambda { |n| n.active? ? '#' : '' }]} 
-    ]}]} 
+    ]}
+  ]} 
 ]}
 
 
