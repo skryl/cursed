@@ -24,6 +24,7 @@ class Window
     @buffer   = Buffer.new(self)
     @parent = params[:parent]
     @cwindow = params[:window]
+    @exclusive = params[:exclusive].nil? ? false : params[:exclusive]
     @border = params[:border].nil? ? true : params[:border]
     @flow   = params[:flow] || DEFAULT_FLOW
     @title  = params[:title] || 'window'
@@ -57,6 +58,7 @@ class Window
 
   def visible?; @visible end
   def hidden?; !@visible end
+  def exclusive?; @exclusive end
   def border?; @border end
   def select; @selected = true end
   def unselect; @selected = false end
@@ -84,23 +86,26 @@ class Window
 
   def hide_selected
     active = active_child
-    select_adjacent_child(:next)
+    select_child(:next)
     active.hide
   end
 
-  def select_adjacent_child(order)
-    children = visible_children
+  def select_child(direction)
     active = active_child
+    valid_children = exclusive? ? children : visible_children
+    new_child = next_child(valid_children, active, direction)
+    active.hide    if exclusive?
     active.unselect
-    new_idx = \
-      ((children.index(active) + 
-       (order == :next ? 1 : -1)) % 
-      children.size)
-    children[new_idx].select
+    new_child.show if exclusive?
+    new_child.select
   end
 
-  def find_child(title)
-    visible_children.find { |p| p.title == title }
+  def next_child(children, active, direction)
+    new_idx = \
+      ((children.index(active) + 
+       (direction == :next ? 1 : -1)) % 
+      children.size)
+    children[new_idx]
   end
 
 # window attributes ie. height, width, top, left

@@ -34,9 +34,9 @@ class HTM
   end
 
   def while_learning
-    learning = true
+    @learning = true
     yield
-    learning = false
+    @learning = false
   end
 
   def activity_ratio

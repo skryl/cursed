@@ -15,14 +15,16 @@
 * L - scroll right
 * x - hide instrument
 * X - hide panel
-* s - switch to 'show' mode
-* n - step simulation
-* N - step simulation 10 times
+* m - switch to 'show' mode
+* n - next screen
+* p - prev screen
+* s - step simulation
+* S - step simulation 10 times
 * f - step simulation 100 times
 * q - exit
 
-### Show Mode
-* s - switch to 'normal' mode
+### Menu Mode
+* m - switch to 'normal' mode
 * (0-9) - show instrument (0-9)
 * Shift-(0-9) - show panel (0-9)
 * q - exit

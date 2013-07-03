@@ -6,24 +6,22 @@ class Column
 
   INPUT_SIZE = 30
   MIN_OVERLAP = 5
-  DESIRED_LOCAL_ACTIVITY = 3
+  DESIRED_LOCAL_ACTIVITY = 1
 
   def_delegators :@htm, :inhibition_radius, :columns, :num_columns, :cycles, :learning
   def_delegators :@pdendrite, :synapses
-  attr_reader    :boost, :input_indices
+  attr_reader    :boost, :input_indices, :active_count, :overlap_count
 
   def initialize(htm, inputs)
     @htm = htm
-    @boost = 1
-    @active_count = 0.0
-    @overlap_count = 0.0
+    @boost = 1.0
+    @active_count = 0
+    @overlap_count = 0
     @pdendrite = PDendrite.new(inputs.sample(INPUT_SIZE))
   end
 
   def active?
-    (overlap >= min_local_activity).tap do |active|
-      @active_count += 1 if learning && active
-    end
+    overlap >= min_local_activity
   end
 
 # learning
@@ -32,9 +30,21 @@ class Column
     @pdendrite.tune_synapses
   end
 
+# overlap
+
+  def raw_overlap
+    @pdendrite.overlap
+  end
+
+  def overlap
+    overlap = raw_overlap
+    overlap < MIN_OVERLAP ? 0 : overlap * @boost
+  end
+
 # boost
   
   def tune_boost
+    update_duty_cycle_counters
     tune_overlap_boost
     tune_permanence
   end
@@ -43,11 +53,16 @@ class Column
 
   def tune_overlap_boost
     boost_delta = active_duty_cycle - min_duty_cycle
-    @boost = (boost_delta > 0) ? 1.0 : (@boost + boost_delta)
+    @boost = (boost_delta > 0) ? 1.0 : (@boost + boost_delta.abs)
   end
 
   def active_duty_cycle
-    @active_count / cycles
+    @active_count.to_f / cycles
+  end
+
+  def update_duty_cycle_counters
+    @overlap_count += 1 if learning && overlap > 0
+    @active_count += 1 if learning && active?
   end
 
   def min_duty_cycle
@@ -67,22 +82,9 @@ class Column
   end
 
   def overlap_duty_cycle
-    @overlap_count / cycles
+    @overlap_count.to_f / cycles
   end
   
-# overlap
-
-  def raw_overlap
-    @pdendrite.overlap
-  end
-
-  def overlap
-    overlap = raw_overlap
-    (overlap < MIN_OVERLAP ? 0 : overlap * @boost).tap do |overlap|
-      @overlap_count += 1 if learning && overlap > 0
-    end
-  end
-
 # local activity
 
   def min_local_activity

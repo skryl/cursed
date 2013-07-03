@@ -1,2 +1,4 @@
 # TODO
-- let grid operate scrolling and data window gen
+- debug spatial pooler
+- clean up spatial pooling code
+- write temporal pooler

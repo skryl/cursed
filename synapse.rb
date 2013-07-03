@@ -1,11 +1,11 @@
 class Synapse
-  CONNECTED_PERM = 0.5
-  PERM_D = 0.1
-  INIT_PERM_MIN = CONNECTED_PERM - PERM_D
-  INIT_PERM_MAX = CONNECTED_PERM + PERM_D
+  PERM_CONNECTED = 0.5
+  PERM_DELTA = 0.1
+  INIT_PERM_MIN = PERM_CONNECTED - PERM_DELTA
+  INIT_PERM_MAX = PERM_CONNECTED + PERM_DELTA
 
-  PERMANENCE_INC = 0.01
-  PERMANENCE_DEC = 0.01
+  PERM_INC = 0.01
+  PERM_DEC = 0.01
 
   attr_reader :input, :permanence
 
@@ -15,19 +15,19 @@ class Synapse
   end
 
   def active?
-    @input.active? && @permanence >= CONNECTED_PERM
+    @input.active? && @permanence >= PERM_CONNECTED
   end
 
   def strengthen!
-    @permanence = [@permanence + PERMANENCE_INC, 1.0].min
+    @permanence = [@permanence + PERM_INC, 1.0].min
   end
 
   def boost!
-    @permanence = [@permanence + (0.1 * CONNECTED_PERM), 1.0].min
+    @permanence = [@permanence + (0.1 * PERM_CONNECTED), 1.0].min
   end
 
   def weaken!
-    @permanence = [@permanence - PERMANENCE_DEC, 0.0].max
+    @permanence = [@permanence - PERM_DEC, 0.0].max
   end
 
   def to_h

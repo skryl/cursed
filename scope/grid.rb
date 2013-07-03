@@ -1,27 +1,28 @@
-require_relative 'grid_primitives'
-
 class Grid
   extend Forwardable
-  include GridPrimitives
 
-  SCROLL_AMT = 5
+  BAR = "|"
+  PLS = "+"
+  MNS = "-"
+
   ALTERNATE_COLOR = :red
   Infinity = 1.0/0.0
 
   def_delegator  :@window, :effective_height, :height
   def_delegator  :@window, :effective_width,  :width
   def_delegators :@window, :write, :colorize
-  attr_reader    :rows, :cols, :vscroll, :hscroll, 
-                 :rratio, :cratio, :cell_size, :cells
+  attr_reader    :rows, :cols, :rratio, :cratio, :cell_size, :box_size,
+                 :vscroll, :hscroll, :cells
   
   def initialize(window, **opts)
     @window = window
     @fg, @bg = opts.values_at(:fg, :bg)
     @alt_fg = ALTERNATE_COLOR
 
+    @scroll_amt = 1
     @vscroll, @hscroll = 0, 0
     @rratio, @cratio = 1, 1
-    @cell_size = 1
+    @cell_size, @box_size = 1, 1
   end
 
   def display(streams)
@@ -36,14 +37,14 @@ class Grid
     case direction
     when :down
       return if @data_rows < @rows
-      @vscroll = [@vscroll + SCROLL_AMT, @data_rows-@rows].min
+      @vscroll = [@vscroll + @scroll_amt, @data_rows-@rows].min
     when :up
-      @vscroll = [@vscroll - SCROLL_AMT, 0].max 
+      @vscroll = [@vscroll - @scroll_amt, 0].max 
     when :right
       return if @data_cols < @cols
-      @hscroll = [@hscroll + SCROLL_AMT, @data_cols-@cols].min
+      @hscroll = [@hscroll + @scroll_amt, @data_cols-@cols].min
     when :left
-      @hscroll = [@hscroll - SCROLL_AMT, 0].max 
+      @hscroll = [@hscroll - @scroll_amt, 0].max 
     end
   end
 
@@ -93,14 +94,47 @@ private
   def format_val(val)
     case val
     when Integer
-      "%2d" % val
+      "%##{cell_size}d" % val
     when Float
-      "%.1f" % val
+      "%#1.#{cell_size/2}f" % val
     when String
       return val if val.empty?
-      val * (2/val.length)
+      val * cell_size
     else ''
     end
+  end
+
+# TODO: refactor me
+
+  def rect(row1,col1,row2,col2)
+    width = col2 - col1 + 1
+    height = (row2 - row1)/2
+
+    write(row1, col1, PLS )
+    write(row1, col2, PLS )
+    write(row1, col1+1, (MNS * (width-2)) )
+    (1..height).each do |i| 
+      write(row1 + i, col1, BAR)
+      write(row1 + i, col2, BAR)
+    end
+    write(row1 + height, col1, PLS )
+    write(row1 + height, col2, PLS )
+    write(row1 + height, col1+1, (MNS * (width-2)) )
+  end
+
+  def print_indices(row, col, horz_cell_size, vert_cell_size)
+    row_idx_fmt = "%2d "
+    row_idx_sz  = 3
+    col_idx_fmt = "%2d" + (' ' * (horz_cell_size-1))
+    col_idx_pad = ' ' * (horz_cell_size+1)
+
+    # print top indices
+    col_indices = (hscroll...hscroll+cols).map{|i| col_idx_fmt % i}
+    write(row, col, col_idx_pad + col_indices.join)
+
+    # print side indices
+    row_indices = (vscroll...vscroll+rows).map{|i| row_idx_fmt % i}
+    row_indices.each.with_index { |ridx, i| write(row+1+(i*vert_cell_size)+(vert_cell_size-1), col, ridx) }
   end
 
 end

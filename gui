@@ -5,52 +5,72 @@ require 'pry-debugger'
 require_relative 'htm'
 require_relative 'scope/scope'
 
-SCOPE_CONFIG = { panels: [
-  { title: :stats, visible: true, selected: true, instruments: [
+SCOPE_CONFIG = { screens: [
+  { title: 1, panels: [
+    { title: :activity, visible: true, instruments: [
 
-    {title: :activity, fg: :red, bg: :blue, type: :basic, visible: true,
-     dataf: lambda { |htm| htm.columns }, 
-     streamfs: [lambda { |c| c.active? ? '#' : ''}]},
+      {title: :activity, fg: :red, bg: :blue, type: :full, visible: true,
+       dataf: lambda { |htm| htm.columns }, 
+       streamfs: [lambda { |c| c.active? ? '#' : ''}]},
 
-    {title: :raw_overlap, fg: :white, bg: :yellow, type: :basic, visible: true,
-     dataf: lambda { |htm| htm.columns }, 
-     streamfs: [lambda { |c| c.raw_overlap.to_i }]}, 
+      {title: :raw_overlap, fg: :yellow, bg: :green, type: :full, visible: true,
+       dataf: lambda { |htm| htm.columns }, 
+       streamfs: [lambda { |c| c.raw_overlap }]}, 
 
-    {title: :overlap, fg: :white, bg: :green, type: :basic, visible: true,
-     dataf: lambda { |htm| htm.columns }, 
-     streamfs: [lambda { |c| c.overlap.to_i }]}, 
+      {title: :overlap, fg: :green, bg: :yellow, type: :full, cell_size: 5, visible: true,
+       dataf: lambda { |htm| htm.columns }, 
+       streamfs: [lambda { |c| c.overlap }]}, 
 
-    {title: :min_local_activity, fg: :blue, bg: :green, type: :basic, visible: true,
-     dataf: lambda { |htm| htm.columns }, 
-     streamfs: [lambda { |c| c.min_local_activity.to_i }]},
+      {title: :min_local_activity, fg: :blue, bg: :green, type: :full, cell_size: 5, visible: true,
+       dataf: lambda { |htm| htm.columns }, 
+       streamfs: [lambda { |c| c.min_local_activity }]},
 
-    {title: :boost, fg: :red, bg: :yellow, type: :basic, visible: false,
-     dataf: lambda { |htm| htm.columns }, 
-     streamfs: [lambda { |c| c.boost }]},
+      {title: :inputs, fg: :red, bg: :green, type: :full, visible: true,
+       dataf: lambda { |htm| htm.inputs }, 
+       streamfs: [lambda { |c| c.active? ? '#' : '' }]}
+    ]}, 
+    { title: :boost, visible: true, instruments: [
+      {title: :active_count, fg: :yellow, bg: :green, type: :full, visible: true,
+       dataf: lambda { |htm| htm.columns }, 
+       streamfs: [lambda { |c| c.active_count }]},
 
-    {title: :inputs, fg: :red, bg: :green, type: :basic, visible: true,
-     dataf: lambda { |htm| htm.inputs }, 
-     streamfs: [lambda { |c| c.active? ? '#' : '' }]}
-  ]}, 
-  { title: :synapse_indices, visible: true, selected: false, instruments: [
-    {title: :synapse_indices, fg: :green, bg: :yellow, type: :minimal, visible: true,
-     dataf: lambda { |htm| htm.columns.map(&:synapses)}, 
-     streamfs: [lambda { |s| s.input.index }, 
-                lambda { |s| s.active? ? '#' : '' }]} 
-  ]}, 
-  { title: :synapse_permancence, visible: false, selected: false, instruments: [
-    {title: :synapse_perm, fg: :green, bg: :yellow, type: :minimal, visible: true,
-     dataf: lambda { |htm| htm.columns.map(&:synapses)}, 
-     streamfs: [lambda { |s| s.permanence }, 
-                lambda { |s| s.active? ? '#' : '' }]} 
-  ]}, 
-  { title: :neighbor_indices, visible: false, selected: false, instruments: [
-    {title: :neighbors, fg: :green, bg: :yellow, type: :minimal, visible: true,
-     dataf: lambda { |htm| htm.columns.map(&:neighbors)}, 
-     streamfs: [lambda { |n| n.index }, 
-                lambda { |n| n.active? ? '#' : '' }]} 
-  ]} 
+      {title: :overlap_count, fg: :yellow, bg: :green, type: :full, visible: true,
+       dataf: lambda { |htm| htm.columns }, 
+       streamfs: [lambda { |c| c.overlap_count }]},
+
+      {title: :active_duty_cycle, fg: :green, bg: :yellow, type: :full, cell_size: 4, visible: true,
+       dataf: lambda { |htm| htm.columns }, 
+       streamfs: [lambda { |c| c.active_duty_cycle.round(2) }]},
+
+      {title: :overlap_duty_cycle, fg: :green, bg: :yellow, type: :full, cell_size: 4, visible: true,
+       dataf: lambda { |htm| htm.columns }, 
+       streamfs: [lambda { |c| c.overlap_duty_cycle.round(2) }]},
+
+      {title: :boost, fg: :red, bg: :yellow, type: :full, cell_size: 3,cell_size: 3, visible: true,
+       dataf: lambda { |htm| htm.columns }, 
+       streamfs: [lambda { |c| c.boost }]},
+    ]}]}, 
+  { title: 2, panels: [
+    { title: :synapse_indices, visible: true, instruments: [
+      {title: :synapse_indices, fg: :green, bg: :yellow, type: :minimal, visible: true,
+       dataf: lambda { |htm| htm.columns.map(&:synapses)}, 
+       streamfs: [lambda { |s| s.input.index }, 
+                  lambda { |s| s.active? ? '#' : '' }]} 
+    ]}, 
+    { title: :synapse_permancence, visible: true, instruments: [
+      {title: :synapse_perm, fg: :green, bg: :yellow, type: :minimal, visible: true,
+       dataf: lambda { |htm| htm.columns.map(&:synapses)}, 
+       streamfs: [lambda { |s| perm = (s.permanence * 100).to_i; perm == 100 ? '##' : perm }, 
+                  lambda { |s| s.active? ? '#' : '' }]} 
+    ]}, 
+    { title: :neighbor_indices, visible: true, instruments: [
+      {title: :neighbors, fg: :green, bg: :yellow, type: :minimal, visible: true,
+       dataf: lambda { |htm| htm.columns.map(&:neighbors)}, 
+       streamfs: [lambda { |n| n.index }, 
+                  lambda { |n| n.active? ? '#' : '' }]} 
+    ]}]} 
 ]}
+
 
 PATTERN = [[0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1],
            [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0]] 
