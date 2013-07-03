@@ -18,9 +18,9 @@
 * m - switch to 'show' mode
 * n - next screen
 * p - prev screen
-* s - step simulation
-* S - step simulation 10 times
-* f - step simulation 100 times
+* space - step simulation
+* f - step simulation 10 times
+* F - step simulation 100 times
 * q - exit
 
 ### Menu Mode

@@ -13,7 +13,7 @@ class Scope < Window
     super(window: Curses.stdscr, border: false)
     @htm = htm
 
-    @header = Window.new(parent: self, title: :status, border: true, height: HEADER_HEIGHT)
+    @header = Window.new(parent: self, title: 'Cortex v0.1', border: true, height: HEADER_HEIGHT)
     @body   = Window.new(parent: self, title: :body, border: false, exclusive: true,
                 top: @header.top + @header.height, height: self.effective_height - @header.height)
     @screens = config[:screens].map { |config| 
@@ -55,9 +55,9 @@ class Scope < Window
       when ?n then change_screen(:right)
       when ?p then change_screen(:left) 
       when ?q then exit
-      when ?s then step
-      when ?S then step(10)
-      when ?f then step(100)
+      when 32.chr then step
+      when ?f then step(10)
+      when ?F then step(100)
       end
     when :menu
       case input
