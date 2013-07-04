@@ -5,7 +5,7 @@ class Column
   extend Forwardable
 
   INPUT_SIZE = 30
-  MIN_OVERLAP = 5
+  MIN_OVERLAP = 10
   DESIRED_LOCAL_ACTIVITY = 1
 
   def_delegators :@htm, :inhibition_radius, :columns, :num_columns, :cycles, :learning
@@ -44,7 +44,7 @@ class Column
 # boost
   
   def tune_boost
-    update_duty_cycle_counters
+    update_duty_cycles
     tune_overlap_boost
     tune_permanence
   end
@@ -60,7 +60,7 @@ class Column
     @active_count.to_f / cycles
   end
 
-  def update_duty_cycle_counters
+  def update_duty_cycles
     @overlap_count += 1 if learning && overlap > 0
     @active_count += 1 if learning && active?
   end

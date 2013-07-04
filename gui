@@ -34,11 +34,11 @@ SCOPE_CONFIG = { screens: [
   ]},
   { title: 2, panels: [
     { title: :counts, visible: true, instruments: [
-      {title: :active_count, fg: :yellow, bg: :green, type: :full, visible: true,
+      {title: :active_count, fg: :yellow, bg: :green, type: :full, cell_size: 3, visible: true,
        dataf: lambda { |htm| htm.columns }, 
        streamfs: [lambda { |c| c.active_count }]},
 
-      {title: :overlap_count, fg: :yellow, bg: :green, type: :full, visible: true,
+      {title: :overlap_count, fg: :yellow, bg: :green, type: :full, cell_size: 3, visible: true,
        dataf: lambda { |htm| htm.columns }, 
        streamfs: [lambda { |c| c.overlap_count }]},
 
@@ -70,15 +70,15 @@ SCOPE_CONFIG = { screens: [
        streamfs: [lambda { |s| perm = (s.permanence * 100).to_i; perm == 100 ? '##' : perm }, 
                   lambda { |s| s.active? ? '#' : '' }]} 
     ]} 
-  ]},
-  { title: 4, panels: [
-    { title: :neighbor_indices, visible: true, instruments: [
-      {title: :neighbors, fg: :green, bg: :yellow, type: :minimal, visible: true,
-       dataf: lambda { |htm| htm.columns.map(&:neighbors)}, 
-       streamfs: [lambda { |n| n.index }, 
-                  lambda { |n| n.active? ? '#' : '' }]} 
-    ]}
-  ]} 
+  ]}
+  # { title: 4, panels: [
+  #   { title: :neighbor_indices, visible: true, instruments: [
+  #     {title: :neighbors, fg: :green, bg: :yellow, type: :minimal, visible: true,
+  #      dataf: lambda { |htm| htm.columns.map(&:neighbors)}, 
+  #      streamfs: [lambda { |n| n.index }, 
+  #                 lambda { |n| n.active? ? '#' : '' }]} 
+  #   ]}
+  # ]} 
 ]}
 
 

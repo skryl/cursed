@@ -21,15 +21,17 @@ class Window
 
   def initialize(**params)
     @children = []
-    @buffer   = Buffer.new(self)
-    @parent = params[:parent]
-    @cwindow = params[:window]
-    @exclusive = params[:exclusive].nil? ? false : params[:exclusive]
-    @border = params[:border].nil? ? true : params[:border]
-    @flow   = params[:flow] || DEFAULT_FLOW
-    @title  = params[:title] || 'window'
-    @visible = params[:visible].nil? ? true : params[:visible]
-    @selected = params[:selected].nil? ? false : params[:selected]
+    @buffer       = Buffer.new(self)
+    @parent       = params[:parent]
+    @cwindow      = params[:window]
+    @exclusive    = params[:exclusive].nil? ? false : params[:exclusive]
+    @border       = params[:border].nil? ? true : params[:border]
+    @bg           = params[:bc] || :white
+    @fg           = params[:fg] || :white
+    @flow         = params[:flow] || DEFAULT_FLOW
+    @title        = params[:title] || 'window'
+    @visible      = params[:visible].nil? ? true : params[:visible]
+    @selected     = params[:selected].nil? ? false : params[:selected]
 
     unless @cwindow
       @fixed_height, @fixed_width, @fixed_top, @fixed_left = \
@@ -169,6 +171,7 @@ class Window
     @cwindow.resize(height, width)
     @cwindow.move(top, left)
     @cwindow.clear
+    @cwindow.bkgd(1) # even background hack
     print_buffer
     draw_border
     @cwindow.noutrefresh
@@ -183,7 +186,7 @@ class Window
   end
 
   def draw_border
-    @cwindow.colorize(selected? && parent_selected? ? :red : :white) do 
+    @cwindow.colorize(selected? && parent_selected? ? :red : @bc) do 
       @border ? (@cwindow.box(?|, ?-); draw_title) : @cwindow.marker(?+)
     end
   end
@@ -243,7 +246,7 @@ class Window
 # printing
 
   def print_buffer
-    @border ? print_buffer_in_border : print_buffer_no_border
+    colorize(@fg) { @border ? print_buffer_in_border : print_buffer_no_border }
   end
 
   def print_buffer_in_border

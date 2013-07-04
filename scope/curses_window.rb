@@ -43,6 +43,11 @@ class Curses::Window
     end
   end
 
+# # TODO: get rid of this
+#   def paint
+#     self << 'a' * (height * width)
+#   end
+
 # print primitives
 
   def write(row, col, text)

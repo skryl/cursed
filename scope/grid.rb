@@ -16,7 +16,7 @@ class Grid
   
   def initialize(window, **opts)
     @window = window
-    @fg, @bg = opts.values_at(:fg, :bg)
+    @fg, @bg, @bc = opts.values_at(:fg, :bg, :bc)
     @alt_fg = ALTERNATE_COLOR
 
     @scroll_amt = 1
@@ -29,7 +29,7 @@ class Grid
     @data_rows, @data_cols = calc_dimensions(streams.first)
     @rows = [@data_rows, max_rows].min
     @cols = [@data_cols, max_cols].min
-    @cells = draw
+    @cells = colorize(@bc) { draw }
     fill(streams.map { |s| window_data(s) })
   end
 
