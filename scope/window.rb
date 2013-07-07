@@ -26,12 +26,15 @@ class Window
     @cwindow      = params[:window]
     @exclusive    = params[:exclusive].nil? ? false : params[:exclusive]
     @border       = params[:border].nil? ? true : params[:border]
-    @bg           = params[:bc] || :white
-    @fg           = params[:fg] || :white
     @flow         = params[:flow] || DEFAULT_FLOW
     @title        = params[:title] || 'window'
     @visible      = params[:visible].nil? ? true : params[:visible]
     @selected     = params[:selected].nil? ? false : params[:selected]
+
+    # colors (foreground, background, border)
+    @fg = params[:fg] || :white
+    @bg = params[:bg] || :black
+    @bc = params[:bc] || :blue
 
     unless @cwindow
       @fixed_height, @fixed_width, @fixed_top, @fixed_left = \
