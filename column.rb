@@ -24,7 +24,6 @@ class Column
   end
 
   def active?
-    binding.pry unless min_local_activity
     overlap >= min_local_activity
   end
 
