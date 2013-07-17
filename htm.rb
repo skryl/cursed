@@ -26,10 +26,22 @@ class HTM
     while_learning {
       @cycles += 1
       @inputs.each.with_index { |inp, i| inp.value = new_input[i] }
+
+      # spatial pooling
+      #
       @active_columns = @columns.select { |c| c.active? }
       @active_columns.each { |c| c.tune_proximal_dendrite }
       @columns.each { |c| c.tune_boost }
       tune_inhibition_radius
+
+      # temporal pooling
+      # 1. make predictive cells active and choose one learning cell per active column
+      # 2. reinforce all segments (that caused prediction) for the learning cells
+      # 3. generate new predictive cells (save segments that caused prediction)
+      #
+      @columns.each { |c| c.reinforce_cells }
+      @active_columns.each { |c| c.activate_cells }
+      @columns.each { |c| c.generate_predictions }
     }
   end
 

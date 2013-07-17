@@ -1,3 +1,4 @@
+require 'benchmark'
 require_relative 'screen'
 require_relative 'window'
 
@@ -12,6 +13,7 @@ class Scope < Window
     @mode = :normal
     super(window: Curses.stdscr, border: false)
     @htm = htm
+    @average_step_time = 0.0
 
     @header = Window.new(parent: self, title: 'Cortex v0.1', border: true, bc: :blue, fg: :yellow, height: HEADER_HEIGHT)
     @body   = Window.new(parent: self, title: :body, border: false, exclusive: true,
@@ -54,6 +56,7 @@ class Scope < Window
       when ?H then scroll_instrument(:left)
       when ?n then change_screen(:right)
       when ?p then change_screen(:left) 
+      when ?b then binding.pry
       when ?q then exit
       when 32.chr then step
       when ?f then step(10)
@@ -176,8 +179,8 @@ class Scope < Window
   
   def header_content
     <<-eos
-mode: #{@mode.upcase}  screen: #{active_screen.title}  learning: #{@htm.learning}  columns: #{@htm.num_columns}  inputs: #{@htm.num_inputs}  input_size: #{Column::INPUT_SIZE}  min_overlap: #{Column::MIN_OVERLAP}  desired_local_activity: #{Column::DESIRED_LOCAL_ACTIVITY}
-cycles: #{@htm.cycles}  ir: #{@htm.inhibition_radius}  activity_ratio: #{@htm.activity_ratio}
+mode: #{@mode.upcase}  screen: #{active_screen.title}  learning: #{@htm.learning}  columns: #{@htm.num_columns}  inputs: #{@htm.num_inputs}  input_size: #{Column::INPUT_SIZE}  min_overlap: #{PDendrite::MIN_OVERLAP}  desired_local_activity: #{Column::DESIRED_LOCAL_ACTIVITY}
+cycles: #{@htm.cycles}  ir: #{@htm.inhibition_radius}  activity_ratio: #{@htm.activity_ratio} average_step_time: #{@average_step_time}
     eos
   end
 
@@ -198,7 +201,11 @@ cycles: #{@htm.cycles}  ir: #{@htm.inhibition_radius}  activity_ratio: #{@htm.ac
 # simulation
 
   def step(n=1)
-    n.times { @htm.step }
+    time = \
+      Benchmark.realtime do
+        n.times { @htm.step }
+      end
+    @average_step_time = time/n
   end
 
 end

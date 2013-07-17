@@ -42,18 +42,22 @@ SCOPE_CONFIG = { screens: [
        dataf: lambda { |htm| htm.columns }, 
        streamfs: [lambda { |c| c.overlap_count }]},
 
-      {title: :boost, fg: :red, bg: :yellow, type: :full, cell_size: 3,cell_size: 3, visible: true,
+      {title: :boost, fg: :red, bg: :yellow, type: :full, cell_size: 3,cell_size: 6, visible: true,
        dataf: lambda { |htm| htm.columns }, 
        streamfs: [lambda { |c| c.boost }]}
     ]},
     { title: :boost, visible: true, instruments: [
       {title: :active_duty_cycle, fg: :green, bg: :yellow, type: :full, cell_size: 4, visible: true,
        dataf: lambda { |htm| htm.columns }, 
-       streamfs: [lambda { |c| c.active_duty_cycle.round(2) }]},
+       streamfs: [lambda { |c| c.active_duty_cycle }]},
 
       {title: :overlap_duty_cycle, fg: :green, bg: :yellow, type: :full, cell_size: 4, visible: true,
        dataf: lambda { |htm| htm.columns }, 
-       streamfs: [lambda { |c| c.overlap_duty_cycle.round(2) }]}
+       streamfs: [lambda { |c| c.overlap_duty_cycle }]},
+
+      {title: :min_duty_cycle, fg: :green, bg: :yellow, type: :full, cell_size: 6, visible: true,
+       dataf: lambda { |htm| htm.columns }, 
+       streamfs: [lambda { |c| c.min_duty_cycle }]}
 
     ]}
   ]}, 
@@ -67,7 +71,7 @@ SCOPE_CONFIG = { screens: [
     { title: :synapse_permancence, visible: true, instruments: [
       {title: :synapse_perm, fg: :green, bg: :yellow, type: :minimal, visible: true,
        dataf: lambda { |htm| htm.columns.map(&:synapses)}, 
-       streamfs: [lambda { |s| perm = (s.permanence * 100).to_i; perm == 100 ? '##' : perm }, 
+       streamfs: [lambda { |s| perm = (s.permanence * 100).to_i; perm > 49 ? '#' : perm }, 
                   lambda { |s| s.active? ? '#' : '' }]} 
     ]} 
   ]}

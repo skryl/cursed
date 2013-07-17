@@ -1,27 +1,35 @@
 require_relative 'pdendrite'
+require_relative 'cell'
 require 'forwardable'
 
 class Column
   extend Forwardable
 
+  CELL_COUNT = 4
   INPUT_SIZE = 30
-  MIN_OVERLAP = 10
-  DESIRED_LOCAL_ACTIVITY = 1
+  DESIRED_LOCAL_ACTIVITY = 3
 
   def_delegators :@htm, :inhibition_radius, :columns, :num_columns, :cycles, :learning
-  def_delegators :@pdendrite, :synapses
-  attr_reader    :boost, :input_indices, :active_count, :overlap_count
+  def_delegators :@pdendrite, :synapses, :raw_overlap
+  attr_reader    :boost, :input_indices, :active_count, :overlap_count, :cells
 
   def initialize(htm, inputs)
+    @num_cells = CELL_COUNT
     @htm = htm
     @boost = 1.0
     @active_count = 0
     @overlap_count = 0
     @pdendrite = PDendrite.new(inputs.sample(INPUT_SIZE))
+    @cells = Array.new(@num_cells) { Cell.new(self) }
   end
 
   def active?
+    binding.pry unless min_local_activity
     overlap >= min_local_activity
+  end
+
+  def active_without_predictions?
+    !@cells.any?(&:predicted?)
   end
 
 # learning
@@ -32,13 +40,8 @@ class Column
 
 # overlap
 
-  def raw_overlap
-    @pdendrite.overlap
-  end
-
   def overlap
-    overlap = raw_overlap
-    overlap < MIN_OVERLAP ? 0 : overlap * @boost
+    @pdendrite.overlap * @boost
   end
 
 # boost
@@ -91,19 +94,50 @@ class Column
     kth_score(neighbors, DESIRED_LOCAL_ACTIVITY)
   end
 
-  def kth_score(neighbors, dla)
-    neighbors.map { |n| n.overlap }.sort.reverse[dla-1]
+  def kth_score(neighbors, k)
+    neighbors.map(&:overlap).sort.reverse[k-1]
   end
 
   def index
     @index ||= columns.index { |c| c == self }
   end
 
-  def neighbors
-    idx_min = index - inhibition_radius
+  def neighbors(radius=inhibition_radius)
+    idx_min = index - radius
     idx_min = (idx_min < 0) ? num_columns + idx_min : idx_min
-    columns.rotate(idx_min).take(inhibition_radius*2+1) - [self]
+    columns.rotate(idx_min).take(radius*2+1) - [self]
   end
+
+# reinforcement
+
+  def reinforce_cells
+    @cells.each(&:reinforce)
+  end
+
+# activation
+
+  def activate_cells
+    ensure_learning_cell
+  end
+  
+  def ensure_learning_cell
+    @cells.any?(&:learning?) || choose_learning_cell.learn!
+  end
+
+  def choose_learning_cell
+    @cells.select  { |c| c.best_matching_segment }.
+           sort_by { |c| c.best_matching_segment.overlap}.
+           last || 
+    @cells.sort_by {|c| c.num_segments }.first
+  end
+
+# predictions
+
+  def generate_predictions
+    @cells.each(&:predict_next_state)
+  end
+
+# data
 
   def to_h
     { raw_overlap: raw_overlap, 

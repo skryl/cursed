@@ -14,8 +14,8 @@ class Synapse
     @permanence = rand(INIT_PERM_MIN..INIT_PERM_MAX).round(2)
   end
 
-  def active?
-    @input.active? && @permanence >= PERM_CONNECTED
+  def active?(**opts)
+    @input.send((state = opts[:state]) ? "#{state}?": :active?) && (opts[:aggressive] || @permanence >= PERM_CONNECTED)
   end
 
   def strengthen!
