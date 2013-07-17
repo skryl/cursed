@@ -13,7 +13,7 @@ class Scope < Window
     @mode = :normal
     super(window: Curses.stdscr, border: false)
     @htm = htm
-    @average_step_time = 0.0
+    @step_time = 0.0
 
     @header = Window.new(parent: self, title: 'Cortex v0.1', border: true, bc: :blue, fg: :yellow, height: HEADER_HEIGHT)
     @body   = Window.new(parent: self, title: :body, border: false, exclusive: true,
@@ -180,7 +180,7 @@ class Scope < Window
   def header_content
     <<-eos
 mode: #{@mode.upcase}  screen: #{active_screen.title}  learning: #{@htm.learning}  columns: #{@htm.num_columns}  inputs: #{@htm.num_inputs}  input_size: #{Column::INPUT_SIZE}  min_overlap: #{PDendrite::MIN_OVERLAP}  desired_local_activity: #{Column::DESIRED_LOCAL_ACTIVITY}
-cycles: #{@htm.cycles}  ir: #{@htm.inhibition_radius}  activity_ratio: #{@htm.activity_ratio} average_step_time: #{@average_step_time}
+cycles: #{@htm.cycles} step_time: #{@step_time.round(2)} ir: #{@htm.inhibition_radius}  activity_ratio: #{@htm.activity_ratio}
     eos
   end
 
@@ -205,7 +205,7 @@ cycles: #{@htm.cycles}  ir: #{@htm.inhibition_radius}  activity_ratio: #{@htm.ac
       Benchmark.realtime do
         n.times { @htm.step }
       end
-    @average_step_time = time/n
+    @step_time = time/n
   end
 
 end
