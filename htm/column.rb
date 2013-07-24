@@ -126,7 +126,6 @@ class Column
 
   def generate_predictions
     @cells.each(&:predict_next_state)
-    ensure_learning_cell
   end
 
 # learning cell selection

@@ -26,28 +26,28 @@ module TemporalAttributes
       klass.class_eval do
         extend Forwardable
         extend TemporalAttributesClassMethods
+
         def_delegators  TemporalAttributes, :global_time, :use_global_time
         def_delegators 'self.class', :temporal_attributes, :temporal_attribute_settings
+
+        @temporal_attributes = []
         @temporal_attribute_settings = {}
       end
     end
   end
 
   module TemporalAttributesClassMethods
-    attr_reader :temporal_attribute_settings
+    attr_reader :temporal_attributes, :temporal_attribute_settings
 
-    def temporal_attr(*attrs, history: 2)
+    def temporal_attr(*attrs, type: :historical, history: 2)
       attrs.each do |attr|
-        @temporal_attribute_settings[attr] = history 
+        @temporal_attributes << attr
+        @temporal_attribute_settings[attr] = [type, history]
       end
-    end
-
-    def temporal_attributes
-      @temporal_attribute_settings.keys
     end
   end
 
-  def get(key, time= global_time || 0)
+  def get(key, time = default_time)
     key = key.to_sym
     # db[key][time] if valid_temporal_attribute?(key)
     db[key][time]
@@ -56,11 +56,15 @@ module TemporalAttributes
   def set(key, val)
     key = key.to_sym
     # if valid_temporal_attribute?(key)
-      db[key].unshift(val)
-      db[key] = db[key][0...history(key)]
-      val
+    historical?(key) ? shift_value(key, val) : set_value(key, val)
     # else nil
     # end
+  end
+
+  def snap
+    snapshot_attributes.each do |attr|
+      shift_value(attr, get(attr))
+    end
   end
 
   def respond_to_missing?(method, priv)
@@ -79,6 +83,10 @@ module TemporalAttributes
 
 private
 
+  def default_time
+    global_time || 0
+  end
+
   def init
     @temporal_mod = TemporalAttributes
     @temporal_db = Hash.new { |h,k| h[k] = [] } 
@@ -90,12 +98,30 @@ private
     run_once(:db, init_proc, body_proc)
   end
 
+  def shift_value(key, val)
+    db[key].unshift(val)
+    db[key] = db[key][0...history(key)]
+    val
+  end
+
+  def set_value(key, val)
+    db[key][default_time] = val
+  end
+
   def valid_temporal_attribute?(attr)
     temporal_attributes.include?(attr)
   end
 
+  def snapshot_attributes
+    temporal_attributes.select { |attr| !historical?(attr) }
+  end
+
+  def historical?(key)
+    temporal_attribute_settings[key.to_sym].first == :historical
+  end
+
   def history(key)
-    temporal_attribute_settings[key.to_sym]
+    temporal_attribute_settings[key.to_sym].last
   end
 
   def run_once(name, init, body)

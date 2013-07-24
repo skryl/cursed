@@ -45,8 +45,9 @@ class HTM
       # 1. reinforce all segments (that caused prediction) for the learning cells
       # 2. generate new predictive cells (save segments that caused prediction)
       #
-      # @columns.each { |c| c.reinforce_cells }
-      # @columns.each { |c| c.generate_predictions }
+      @columns.each { |c| c.reinforce_cells }
+      @columns.each { |c| c.generate_predictions }
+      @active_columns.each { |c| c.ensure_learning_cell }
 
       # spatial pooling
       # 1. reinforce the dendrites of active columns

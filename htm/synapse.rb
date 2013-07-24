@@ -1,4 +1,6 @@
 class Synapse
+  include TemporalAttributes
+
   PERM_CONNECTED = 0.5
   PERM_DELTA = 0.1
   INIT_PERM_MIN = PERM_CONNECTED - PERM_DELTA
@@ -8,6 +10,7 @@ class Synapse
   PERM_DEC = 0.01
 
   attr_reader :input, :permanence
+  temporal_attr :active, type: :snapshot, history: 2
 
   def initialize(input, **opts)
     @input = input

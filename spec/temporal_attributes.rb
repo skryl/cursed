@@ -23,15 +23,16 @@ describe TemporalAttributes do
 
   it 'should add a temporal attribute' do
     history.temporal_attr(:a)
-    history.temporal_attr(:b, history: 3)
-    history.temporal_attr(:c, :d, history: 4)
+    history.temporal_attr(:b, type: :historical, history: 3)
+    history.temporal_attr(:c, :d, type: :snapshot, history: 4)
     history.temporal_attributes.should == [:a, :b, :c, :d]
-    history.temporal_attribute_settings.should == { a: 2, b: 3, c: 4, d: 4 }
+    history.temporal_attribute_settings.should == { a: [:historical, 2], b: [:historical, 3], 
+                                                    c: [:snapshot, 4], d: [:snapshot, 4] }
     h.should respond_to(:a, :b, :c, :d)
   end
 
-  it 'should get/set a temporal attribute' do
-    history.temporal_attr :a, history: 3  
+  it 'should get/set a historical attribute' do
+    history.temporal_attr :a, type: :historical, history: 3  
     h.set(:a, 1)
     h.set(:a, 2)
     h.set(:a, 3)
@@ -42,19 +43,39 @@ describe TemporalAttributes do
     h.get(:a, 3).should == nil
   end
 
-  it 'should return historical value when global time is changed' do
-    history.temporal_attr :a, history: 3  
-    history.temporal_attr :b, history: 4 
+  it 'should get/set a snapshot attribute' do
+    history.temporal_attr :a, type: :snapshot, history: 3  
+    h.set(:a, 1)
+    h.set(:a, 2)
+    h.get(:a, 1).should == nil
+    h.snap
+    h.a.should == 2
+    h.a(1).should == 2
+    h.a = 4
+    h.a = 5
+    h.a.should == 5
+    h.a(1).should == 2
+    h.get(:a, 2).should == nil
+  end
 
+  it 'should return historical value when global time is changed' do
+    history.temporal_attr :a, type: :historical, history: 3  
+    history.temporal_attr :b, type: :snapshot,   history: 3 
+    history.temporal_attr :c, type: :historical, history: 4  
+    history.temporal_attr :d, type: :snapshot,   history: 4 
+
+    # test two instances to confirm global time change
     h.global_time.should == 0
     h2.global_time.should == 0
 
-    (1..5).each { |t| h.a = t; h2.b = t+1 }
-    h.use_global_time(0) { [h.a, h2.b] }.should == [5, 6]
-    h.use_global_time(1) { [h.a, h2.b] }.should == [4, 5]
-    h.use_global_time(2) { [h.a, h2.b] }.should == [3, 4]
-    h.use_global_time(3) { [h.a, h2.b] }.should == [nil, 3]
-    h.use_global_time(4) { [h.a, h2.b] }.should == [nil, nil]
+    (1..5).each { |t| h.a, h2.c = t, t+1 }
+    (1..5).each { |t| h.b, h2.d = t, t+1; (h.snap; h2.snap) if t < 5 }
+
+    h.use_global_time(0) { [h.a, h.b, h2.c, h2.d] }.should == [5, 5, 6, 6]
+    h.use_global_time(1) { [h.a, h.b, h2.c, h2.d] }.should == [4, 4, 5, 5]
+    h.use_global_time(2) { [h.a, h.b, h2.c, h2.d] }.should == [3, 3, 4, 4]
+    h.use_global_time(3) { [h.a, h.b, h2.c, h2.d] }.should == [nil, nil, 3, 3]
+    h.use_global_time(4) { [h.a, h.b, h2.c, h2.d] }.should == [nil, nil, nil, nil]
   end
   
 end

@@ -6,9 +6,9 @@ class Cell
   include TemporalAttributes
   extend  Forwardable
 
-  def_delegators :@column, :htm, :columns
-  def_delegators :htm, :cells
-  temporal_attr  :predicted, :predictive_segment, history: 2
+  def_delegators  :@column, :htm, :columns
+  def_delegators  :htm, :cells
+  temporal_attr   :predicted, :predictive_segment, history: 2
 
   PUBLIC_VARS = %i(learning column segments)
   HASH_ATTRS  = PUBLIC_VARS + %i(index) - %i(column)
@@ -59,17 +59,17 @@ class Cell
   def reinforce
     if learning?
       reinforce_learning_segment 
-      use_global_time(1) { active_segments.each(&:strengthen!) }
+      # use_global_time(1) { active_segments.each(&:strengthen!) }
       # use_global_time(2) { predictive_segment.strengthen! }
     elsif (prev_predicted? && !predicted?)
-      use_global_time(1) { active_segments.each(&:weaken!) }
+      # use_global_time(1) { active_segments.each(&:weaken!) }
       # use_global_time(2) { predictive_segment.weaken! }
     end
   end
 
   def reinforce_learning_segment
     @segments << @learning_segment unless @segments.include?(@learning_segment)
-    @learning_segment.add_new_synapses(@learning_neighbors)
+    @learning_segment.add_new_synapses(learning_neighbors)
   end
 
 # predictions
@@ -79,7 +79,6 @@ class Cell
     self.predicted = @active_segments.any?
     @learning = @active_segments.any?(&:learning?)
     @learning_segment = @active_segments.find(&:learning?) 
-    @learning_neighbors = learning_neighbors
     # self.predictive_segment = use_global_time(1) { best_matching_segment }
   end
 
