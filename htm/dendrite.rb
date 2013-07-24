@@ -1,6 +1,7 @@
 require_relative 'synapse'
 
 class Dendrite
+
   attr_reader :synapses
 
   def initialize(inputs = [])
@@ -13,10 +14,6 @@ class Dendrite
 
   def inactive_synapses(**opts)
     @synapses.reject { |syn| syn.active?(opts)}
-  end
-
-  def to_h
-    { synapses: @synapses.map { |syn| syn.to_h }}
   end
 
 end

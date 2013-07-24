@@ -9,9 +9,9 @@ class Synapse
 
   attr_reader :input, :permanence
 
-  def initialize(input)
+  def initialize(input, **opts)
     @input = input
-    @permanence = rand(INIT_PERM_MIN..INIT_PERM_MAX).round(2)
+    @permanence = opts[:active] ? PERM_CONNECTED : rand(INIT_PERM_MIN..INIT_PERM_MAX).round(2)
   end
 
   def active?(**opts)
@@ -28,10 +28,6 @@ class Synapse
 
   def weaken!
     @permanence = [@permanence - PERM_DEC, 0.0].max
-  end
-
-  def to_h
-    { input: @input.active?, permanence: @permanence }
   end
 
 end

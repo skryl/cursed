@@ -2,11 +2,13 @@ require_relative 'synapse'
 require_relative 'dendrite'
 
 class DDendrite < Dendrite
-  attr_reader :synapses
+  include Inspector
 
   MIN_THRESHOLD = 1
   ACTIVATION_THRESHOLD = 5
   MAX_NEW_SYNAPSES = 3
+
+  hide_vars!
 
   def raw_overlap(state = :active)
     active_synapses(aggressive: true, state: state).count
@@ -25,9 +27,18 @@ class DDendrite < Dendrite
     raw_overlap(:learning) >= ACTIVATION_THRESHOLD
   end
 
+  def strengthen!
+    active_synapses.each { |syn| syn.strengthen! }
+    inactive_synapses.each { |syn| syn.weaken! }
+  end
+
+  def weaken!
+    active_synapses.each { |syn| syn.weaken! }
+  end
+
   def add_new_synapses(cells)
     inputs = cells.sample(MAX_NEW_SYNAPSES - active_synapses.count)
-    @synapses += inputs.map { |inp| Synapse.new(inp) }
+    @synapses += inputs.map { |inp| Synapse.new(inp, active: true) }
   end
 
 end

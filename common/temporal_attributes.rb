@@ -23,11 +23,13 @@ module TemporalAttributes
     end
 
     def included(klass)
-      klass.extend(Forwardable)
-      klass.def_delegators  self, :global_time, :use_global_time
-      klass.def_delegators 'self.class', :temporal_attributes, :temporal_attribute_settings
-      klass.instance_variable_set("@temporal_attribute_settings", {})
-      klass.extend(TemporalAttributesClassMethods)
+      klass.class_eval do
+        extend Forwardable
+        extend TemporalAttributesClassMethods
+        def_delegators  TemporalAttributes, :global_time, :use_global_time
+        def_delegators 'self.class', :temporal_attributes, :temporal_attribute_settings
+        @temporal_attribute_settings = {}
+      end
     end
   end
 
@@ -65,10 +67,12 @@ module TemporalAttributes
     valid_temporal_attribute?(method) || super
   end
 
+  #TODO: define accessors dynamically vs method_missing
+  #
   def method_missing(method, *args, &block)
-    method, setter = /^(.*?)(=?)$/.match(method).values_at(1,2)
-    if valid_temporal_attribute?(method.to_sym) 
-      setter.empty? ? get(method, *args) : set(method, *args)
+    meth, setter = /^(.*?)(=?)$/.match(method).values_at(1,2)
+    if valid_temporal_attribute?(meth.to_sym) 
+      setter.empty? ? get(meth, *args) : set(meth, *args)
     else super
     end
   end

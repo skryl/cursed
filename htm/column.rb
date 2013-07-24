@@ -3,7 +3,9 @@ require_relative 'cell'
 require 'forwardable'
 
 class Column
-  extend Forwardable
+  include Inspector
+  include TemporalAttributes
+  extend  Forwardable
 
   CELL_COUNT = 4
   INPUT_SIZE = 30
@@ -11,7 +13,14 @@ class Column
 
   def_delegators :@htm, :inhibition_radius, :columns, :num_columns, :cycles, :learning
   def_delegators :@pdendrite, :synapses, :raw_overlap
-  attr_reader    :boost, :input_indices, :active_count, :overlap_count, :cells
+
+  PUBLIC_VARS = %i(boost active_count overlap_count pdendrite cells htm)
+  HASH_ATTRS  = PUBLIC_VARS + %i(index active? raw_overlap overlap active_duty_cycle overlap_duty_cycle min_local_activity) - %i(htm)
+  SHOW_ATTRS  = HASH_ATTRS  - %i(pdendrite cells)
+
+  attr_reader *PUBLIC_VARS
+  show_fields *SHOW_ATTRS
+  hash_fields *HASH_ATTRS
 
   def initialize(htm, inputs)
     @num_cells = CELL_COUNT
@@ -28,7 +37,7 @@ class Column
   end
 
   def active_without_predictions?
-    !@cells.any?(&:predicted?)
+    active? && !@cells.any?(&:predicted?)
   end
 
 # learning
@@ -113,40 +122,28 @@ class Column
     @cells.each(&:reinforce)
   end
 
-# activation
-
-  def activate_cells
-    ensure_learning_cell
-  end
-  
-  def ensure_learning_cell
-    @cells.any?(&:learning?) || choose_learning_cell.learn!
-  end
-
-  def choose_learning_cell
-    @cells.select  { |c| c.best_matching_segment }.
-           sort_by { |c| c.best_matching_segment.overlap}.
-           last || 
-    @cells.sort_by {|c| c.num_segments }.first
-  end
-
 # predictions
 
   def generate_predictions
     @cells.each(&:predict_next_state)
+    ensure_learning_cell
   end
 
-# data
+# learning cell selection
 
-  def to_h
-    { raw_overlap: raw_overlap, 
-      overlap: overlap, 
-      boost: @boost,
-      num_neighbors: neighbors.size,
-      active_duty_cycle: active_duty_cycle,
-      overlap_duty_cycle: overlap_duty_cycle,
-      min_local_activity: min_local_activity
-    }.merge @pdendrite.to_h
+  def learning_cell
+    @cells.find(&:learning?)
+  end
+
+  def ensure_learning_cell
+    learning_cell || choose_best_cell.learn!
+  end
+
+  def choose_best_cell
+    @cells.select  { |c| c.best_matching_segment }.
+           sort_by { |c| c.best_matching_segment.overlap}.
+           last || 
+    @cells.sort_by {|c| c.num_segments }.first
   end
 
 end

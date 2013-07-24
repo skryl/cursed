@@ -1,11 +1,14 @@
 #!/usr/bin/env ruby
 
 require 'pry'
-require 'pry-debugger'
-require_relative 'htm'
+require 'pry-byebug'
+require 'pry-stack_explorer'
+# require 'byebug'
+require_relative 'htm/htm'
 require_relative 'scope/scope'
 
 SCOPE_CONFIG = { screens: [
+
   { title: 1, panels: [
     { title: :activity, visible: true, instruments: [
 
@@ -32,6 +35,7 @@ SCOPE_CONFIG = { screens: [
        streamfs: [lambda { |c| c.min_local_activity }]}
     ]}
   ]},
+
   { title: 2, panels: [
     { title: :counts, visible: true, instruments: [
       {title: :active_count, fg: :yellow, bg: :green, type: :full, cell_size: 3, visible: true,
@@ -42,7 +46,7 @@ SCOPE_CONFIG = { screens: [
        dataf: lambda { |htm| htm.columns }, 
        streamfs: [lambda { |c| c.overlap_count }]},
 
-      {title: :boost, fg: :red, bg: :yellow, type: :full, cell_size: 3,cell_size: 6, visible: true,
+      {title: :boost, fg: :red, bg: :yellow, type: :full, cell_size: 6, visible: true,
        dataf: lambda { |htm| htm.columns }, 
        streamfs: [lambda { |c| c.boost }]}
     ]},
@@ -61,6 +65,7 @@ SCOPE_CONFIG = { screens: [
 
     ]}
   ]}, 
+
   { title: 3, panels: [
     { title: :synapse_indices, visible: true, instruments: [
       {title: :synapse_indices, fg: :green, bg: :yellow, type: :minimal, visible: true,
@@ -74,15 +79,21 @@ SCOPE_CONFIG = { screens: [
        streamfs: [lambda { |s| perm = (s.permanence * 100).to_i; perm > 49 ? '#' : perm }, 
                   lambda { |s| s.active? ? '#' : '' }]} 
     ]} 
-  ]}
-  # { title: 4, panels: [
-  #   { title: :neighbor_indices, visible: true, instruments: [
-  #     {title: :neighbors, fg: :green, bg: :yellow, type: :minimal, visible: true,
-  #      dataf: lambda { |htm| htm.columns.map(&:neighbors)}, 
-  #      streamfs: [lambda { |n| n.index }, 
-  #                 lambda { |n| n.active? ? '#' : '' }]} 
-  #   ]}
-  # ]} 
+  ]},
+
+  { title: 4, panels: [
+    { title: :cells, visible: true, instruments: [
+      {title: :activity, fg: :red, bg: :blue, type: :full, visible: true,
+       dataf: lambda { |htm| htm.cells }, 
+       streamfs: [lambda { |c| c.active? ? '#' : ''}]},
+      {title: :predictions, fg: :green, bg: :blue, type: :full, visible: true,
+       dataf: lambda { |htm| htm.cells }, 
+       streamfs: [lambda { |c| c.predicted? ? '#' : ''}]},
+      {title: :segments, fg: :yellow, bg: :blue, type: :full, visible: true,
+       dataf: lambda { |htm| htm.cells }, 
+       streamfs: [lambda { |c| c.segments.count }]}
+    ]}
+  ]} 
 ]}
 
 

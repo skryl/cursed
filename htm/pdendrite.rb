@@ -2,9 +2,10 @@ require_relative 'synapse'
 require_relative 'dendrite'
 
 class PDendrite < Dendrite
-  attr_reader :synapses
+  include Inspector
 
   MIN_OVERLAP = 10
+  hide_vars!
 
   def raw_overlap
     active_synapses.count

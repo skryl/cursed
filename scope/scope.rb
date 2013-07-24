@@ -93,7 +93,7 @@ class Scope < Window
 
   def refresh
     @header << header_content
-    @menu<< menu_content
+    @menu << menu_content
     super
   end
 
