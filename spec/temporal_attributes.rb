@@ -3,12 +3,27 @@ require_relative '../common/temporal_attributes'
 
 describe TemporalAttributes do
 
-  let(:history) { class History; include TemporalAttributes end }
+  let(:history) { 
+    class History
+      include TemporalAttributes 
+
+      def initialize
+        @toggle = false
+      end
+
+      def toggle
+        @toggle = !@toggle
+      end
+    end 
+    History
+  }
+
   let(:h) { history.new }
   let(:h2) { history.new }
 
   it 'class should respond to class methods' do
     history.should respond_to(:temporal_attr)
+    history.should respond_to(:temporal_caller)
     history.should respond_to(:temporal_attributes)
     history.should respond_to(:temporal_attribute_settings)
   end
@@ -17,7 +32,7 @@ describe TemporalAttributes do
     h.should respond_to(:global_time)
     h.should respond_to(:use_global_time)
     h.should respond_to(:temporal_attributes)
-    h.should respond_to(:temporal_attribute_settings)
+    h.should respond_to(:temporal_settings)
     h.should_not respond_to(:set_global_time)
   end
 
@@ -25,14 +40,17 @@ describe TemporalAttributes do
     history.temporal_attr(:a)
     history.temporal_attr(:b, type: :historical, history: 3)
     history.temporal_attr(:c, :d, type: :snapshot, history: 4)
-    history.temporal_attributes.should == [:a, :b, :c, :d]
+    history.temporal_caller(:e, :mymethod, history: 4)
+    history.temporal_attributes.should == [:a, :b, :c, :d, :e]
     history.temporal_attribute_settings.should == { a: [:historical, 2], b: [:historical, 3], 
-                                                    c: [:snapshot, 4], d: [:snapshot, 4] }
-    h.should respond_to(:a, :b, :c, :d)
+                                                    c: [:snapshot, 4],   d: [:snapshot, 4],
+                                                    e: [:caller, 4, :mymethod] }
+    h.should respond_to(:a, :b, :c, :d, :e)
   end
 
   it 'should get/set a historical attribute' do
     history.temporal_attr :a, type: :historical, history: 3  
+    h.get(:a, 0).should == nil
     h.set(:a, 1)
     h.set(:a, 2)
     h.set(:a, 3)
@@ -56,6 +74,19 @@ describe TemporalAttributes do
     h.a.should == 5
     h.a(1).should == 2
     h.get(:a, 2).should == nil
+  end
+
+  it 'should get/set a caller attribute' do
+    history.temporal_caller :a, :toggle, history: 3
+    h.snap
+    h.a(1).should == true 
+    h.a.should == false
+    h.a.should == true
+    h.set(:a, 1) # set should do nothing
+    h.a.should == false
+    h.snap
+    h.a.should == false
+    h.a(1).should == true
   end
 
   it 'should return historical value when global time is changed' do
