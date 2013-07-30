@@ -1,6 +1,4 @@
 class Synapse
-  include TemporalAttributes
-
   PERM_CONNECTED = 0.5
   PERM_DELTA = 0.1
   INIT_PERM_MIN = PERM_CONNECTED - PERM_DELTA
@@ -9,16 +7,13 @@ class Synapse
   PERM_INC = 0.01
   PERM_DEC = 0.01
 
-  attr_reader :input, :permanence
-  temporal_attr :active, type: :snapshot, history: 2
+  PUBLIC_VARS = %i(permanence input)
+
+  attr_reader *PUBLIC_VARS
 
   def initialize(input, **opts)
     @input = input
     @permanence = opts[:active] ? PERM_CONNECTED : rand(INIT_PERM_MIN..INIT_PERM_MAX).round(2)
-  end
-
-  def active?(**opts)
-    @input.send((state = opts[:state]) ? "#{state}?": :active?) && (opts[:aggressive] || @permanence >= PERM_CONNECTED)
   end
 
   def strengthen!

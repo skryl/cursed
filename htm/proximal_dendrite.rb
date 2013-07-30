@@ -1,11 +1,16 @@
-require_relative 'synapse'
+require_relative '../common/inspector'
+require_relative 'input_synapse'
 require_relative 'dendrite'
 
-class PDendrite < Dendrite
+class ProximalDendrite < Dendrite
   include Inspector
 
   MIN_OVERLAP = 10
   hide_vars!
+
+  def initialize(inputs = [])
+    @synapses = inputs.map { |inp| InputSynapse.new(inp) }
+  end
 
   def raw_overlap
     active_synapses.count

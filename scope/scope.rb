@@ -52,6 +52,8 @@ class Scope < Window
       when ?m then switch_mode(:menu)
       when ?K then scroll_instrument(:up)
       when ?J then scroll_instrument(:down)
+      when ?U then scroll_instrument(:up, amt: 10)
+      when ?D then scroll_instrument(:down, amt: 10)
       when ?L then scroll_instrument(:right)
       when ?H then scroll_instrument(:left)
       when ?n then change_screen(:right)
@@ -170,8 +172,8 @@ class Scope < Window
     switch_mode(:normal)
   end
 
-  def scroll_instrument(direction)
-    active_instrument.scroll(direction)
+  def scroll_instrument(direction, **opts)
+    active_instrument.scroll(direction, opts)
   end
 
 
@@ -179,8 +181,8 @@ class Scope < Window
   
   def header_content
     <<-eos
-mode: #{@mode.upcase}  screen: #{active_screen.title}  learning: #{@htm.learning}  columns: #{@htm.num_columns}  inputs: #{@htm.num_inputs}  input_size: #{Column::INPUT_SIZE}  min_overlap: #{PDendrite::MIN_OVERLAP}  desired_local_activity: #{Column::DESIRED_LOCAL_ACTIVITY}
-cycles: #{@htm.cycles} step_time: #{@step_time.round(2)} ir: #{@htm.inhibition_radius}  activity_ratio: #{@htm.activity_ratio}
+mode: #{@mode.upcase}  screen: #{active_screen.title}  learning: #{@htm.learning}  columns: #{@htm.num_columns}  inputs: #{@htm.num_inputs}  input_size: #{Column::INPUT_SIZE}  min_overlap: #{ProximalDendrite::MIN_OVERLAP}  desired_local_activity: #{Column::DESIRED_LOCAL_ACTIVITY}
+cycles: #{@htm.cycles} step_time: #{@step_time.round(2)} ir: #{@htm.inhibition_radius}  activity_ratio: #{@htm.activity_ratio} active_columns: #{@htm.active_columns.count} active_cells: #{@htm.active_cells.count} learning_cells: #{@htm.learning_cells.count}
     eos
   end
 

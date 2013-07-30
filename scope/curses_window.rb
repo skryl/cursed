@@ -8,11 +8,13 @@ class Curses::Window
 
   COLOR  = 
     { red:     Curses::COLOR_RED,
-      green:   Curses::COLOR_GREEN,
       blue:    Curses::COLOR_BLUE,
+      cyan:    Curses::COLOR_CYAN,
+      green:   Curses::COLOR_GREEN,
       white:   Curses::COLOR_WHITE,
+      black:   Curses::COLOR_BLACK,
       yellow:  Curses::COLOR_YELLOW,
-      black:   Curses::COLOR_BLACK  }
+      magenta: Curses::COLOR_MAGENTA }
 
   STYLE = 
     { reverse:    Curses::A_REVERSE,
@@ -31,10 +33,12 @@ class Curses::Window
 
     Curses.init_pair(COLOR[:red], COLOR[:red], COLOR[:black])
     Curses.init_pair(COLOR[:blue], COLOR[:blue], COLOR[:black])
+    Curses.init_pair(COLOR[:cyan], COLOR[:cyan], COLOR[:black])
     Curses.init_pair(COLOR[:green], COLOR[:green], COLOR[:black])
-    Curses.init_pair(COLOR[:yellow], COLOR[:yellow], COLOR[:black])
     Curses.init_pair(COLOR[:white], COLOR[:white], COLOR[:black])
     Curses.init_pair(COLOR[:black], COLOR[:black], COLOR[:black])
+    Curses.init_pair(COLOR[:yellow], COLOR[:yellow], COLOR[:black])
+    Curses.init_pair(COLOR[:magenta], COLOR[:magenta], COLOR[:black])
 
     begin
       yield

@@ -26,26 +26,29 @@ class Grid
     @cell_size, @box_size = 1, 1
   end
 
+  # TODO: refactor to seperate nested vs non nested stream processing
+  #
   def display(streams)
     @data_rows, @data_cols = calc_dimensions(streams.first)
     @rows = [@data_rows, max_rows].min
     @cols = [@data_cols, max_cols].min
     @cells = colorize(@gc) { draw }
+    streams = normalize_dimensions(streams)
     fill(streams.map { |s| window_data(s) })
   end
 
-  def scroll(direction)
+  def scroll(direction, amt: @scroll_amt)
     case direction
     when :down
       return if @data_rows < @rows
-      @vscroll = [@vscroll + @scroll_amt, @data_rows-@rows].min
+      @vscroll = [@vscroll + amt, @data_rows-@rows].min
     when :up
-      @vscroll = [@vscroll - @scroll_amt, 0].max 
+      @vscroll = [@vscroll - amt, 0].max 
     when :right
       return if @data_cols < @cols
-      @hscroll = [@hscroll + @scroll_amt, @data_cols-@cols].min
+      @hscroll = [@hscroll + amt, @data_cols-@cols].min
     when :left
-      @hscroll = [@hscroll - @scroll_amt, 0].max 
+      @hscroll = [@hscroll - amt, 0].max 
     end
   end
 
@@ -56,12 +59,26 @@ private
 
   def calc_dimensions(stream)
     if stream.first.is_a? Array
-      [stream.size, stream.first.size]
+      max_size = stream.map(&:length).max
+      [stream.size, max_size]
     else
       if stream.size > max_cols
         [(stream.size.to_f / max_cols).ceil, max_cols]
       else
         [1, stream.size]
+      end
+    end
+  end
+
+  # pads a 2d stream to max col size, otherwise fill_data will fail
+  #
+  def normalize_dimensions(streams)
+    return streams unless streams[0][0].is_a?(Array)
+
+    streams.map do |stream|
+      stream.map do |vals|
+        binding.pry if vals.is_a? String
+        vals[@cols-1] = nil if vals.length < @cols; vals
       end
     end
   end
@@ -80,14 +97,15 @@ private
 
   def fill(streams)
     stream1, stream2 = streams
+    idx_start = @vscroll * @cols + @hscroll
     @cells.each.with_index do |(r,c),i| 
       val = format_val(stream1[i])
-      clr = (stream2 && !stream2[i].empty?) ? @alt_fg : @fg
+      clr = (stream2 && stream2[i] && !stream2[i].empty?) ? @alt_fg : @fg
 
       if !val.empty? 
         colorize(clr, style: :underline) { write(r, c, val) }
       else
-        colorize(@bg, style: :normal) { write(r, c, format_val(i)) }
+        colorize(@bg, style: :normal) { write(r, c, format_val(idx_start+i)) }
       end
     end
   end

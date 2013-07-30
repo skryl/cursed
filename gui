@@ -3,7 +3,7 @@
 require 'pry'
 require 'pry-byebug'
 require 'pry-stack_explorer'
-# require 'byebug'
+
 require_relative 'htm/htm'
 require_relative 'scope/scope'
 
@@ -81,19 +81,36 @@ SCOPE_CONFIG = { screens: [
     ]} 
   ]},
 
+  { title: 5, panels: [
+    { title: :cells, visible: true, instruments: [
+      {title: :segments, fg: :yellow, bg: :blue, type: :minimal, cell_size: 4, visible: true,
+       dataf: lambda { |htm| htm.cells.map(&:segments) }, 
+       streamfs: [lambda { |s| s.synapses.count }]} 
+    ]}
+  ]}, 
+
   { title: 4, panels: [
     { title: :cells, visible: true, instruments: [
-      {title: :activity, fg: :red, bg: :blue, type: :full, visible: true,
+      {title: :learning, fg: :green, bg: :blue, type: :full, visible: true,
        dataf: lambda { |htm| htm.cells }, 
-       streamfs: [lambda { |c| c.active? ? '#' : ''}]},
-      {title: :predictions, fg: :green, bg: :blue, type: :full, visible: true,
-       dataf: lambda { |htm| htm.cells }, 
-       streamfs: [lambda { |c| c.predicted? ? '#' : ''}]},
+       streamfs: [lambda { |c| c.learning? ? '#' : ''}]},
       {title: :segments, fg: :yellow, bg: :blue, type: :full, visible: true,
        dataf: lambda { |htm| htm.cells }, 
        streamfs: [lambda { |c| c.segments.count }]}
     ]}
+  ]}, 
+
+  { title: 6, panels: [
+    { title: :cells, visible: true, instruments: [
+      {title: :activity, fg: :red, bg: :blue, type: :full, visible: true,
+       dataf: lambda { |htm| htm.cells }, 
+       streamfs: [lambda { |c| c.active? ? '#' : ''}]},
+      {title: :predictions, fg: :magenta, bg: :blue, type: :full, visible: true,
+       dataf: lambda { |htm| htm.cells }, 
+       streamfs: [lambda { |c| c.prev_predicted? ? '#' : ''}]}
+    ]}
   ]} 
+
 ]}
 
 

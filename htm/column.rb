@@ -1,10 +1,9 @@
-require_relative 'pdendrite'
+require_relative 'proximal_dendrite'
 require_relative 'cell'
 require 'forwardable'
 
 class Column
   include Inspector
-  include TemporalAttributes
   extend  Forwardable
 
   CELL_COUNT = 4
@@ -28,7 +27,7 @@ class Column
     @boost = 1.0
     @active_count = 0
     @overlap_count = 0
-    @pdendrite = PDendrite.new(inputs.sample(INPUT_SIZE))
+    @pdendrite = ProximalDendrite.new(inputs.sample(INPUT_SIZE))
     @cells = Array.new(@num_cells) { Cell.new(self) }
   end
 
@@ -130,19 +129,36 @@ class Column
 
 # learning cell selection
 
-  def learning_cell
-    @cells.find(&:learning?)
+  def ensure_active_and_learning
+    @cells.each(&:activate_and_check_learning)
+    predicted_next = @cells.select(&:predicted_next?)
+
+    if predicted_next.empty?
+      @cells.each(&:activate!)
+    end
+
+    unless @cells.any?(&:learning?)
+      if (best_cell = best_matching_cell)
+        best_cell.set_learning_segment
+      else
+        fewest_segment_cell.add_learning_segment
+      end
+    end
   end
 
-  def ensure_learning_cell
-    learning_cell || choose_best_cell.learn!
+  def best_matching_cell
+    cell = \
+      @cells.map {|c| 
+          seg = c.best_matching_segment
+          [c, seg, seg && seg.aggressive_overlap] }.
+        select  { |(c, bms, aoverlap)| bms }.
+        sort_by { |(c, bms, aoverlap)| aoverlap }.
+        last
+    cell && cell.first
   end
 
-  def choose_best_cell
-    @cells.select  { |c| c.best_matching_segment }.
-           sort_by { |c| c.best_matching_segment.overlap}.
-           last || 
-    @cells.sort_by {|c| c.num_segments }.first
+  def fewest_segment_cell
+    @cells.sort_by {|c| c.segments.count }.first
   end
 
 end
