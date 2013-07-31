@@ -1,9 +1,6 @@
 #!/usr/bin/env ruby
-
-require 'pry'
-require 'pry-byebug'
-require 'pry-stack_explorer'
-require 'ruby-prof'
+require 'bundler/setup'
+Bundler.require(:default)
 
 require_relative 'htm/htm'
 require_relative 'scope/scope'
