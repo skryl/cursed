@@ -3,6 +3,7 @@
 require 'pry'
 require 'pry-byebug'
 require 'pry-stack_explorer'
+require 'ruby-prof'
 
 require_relative 'htm/htm'
 require_relative 'scope/scope'
@@ -81,7 +82,7 @@ SCOPE_CONFIG = { screens: [
     ]} 
   ]},
 
-  { title: 5, panels: [
+  { title: 4, panels: [
     { title: :cells, visible: true, instruments: [
       {title: :segments, fg: :yellow, bg: :blue, type: :minimal, cell_size: 4, visible: true,
        dataf: lambda { |htm| htm.cells.map(&:segments) }, 
@@ -89,7 +90,7 @@ SCOPE_CONFIG = { screens: [
     ]}
   ]}, 
 
-  { title: 4, panels: [
+  { title: 5, panels: [
     { title: :cells, visible: true, instruments: [
       {title: :learning, fg: :green, bg: :blue, type: :full, visible: true,
        dataf: lambda { |htm| htm.cells }, 
@@ -128,4 +129,20 @@ PATTERN = [[0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,
 #            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
 #            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]]
 
+# RubyProf.start
 Scope.new(HTM.new(pattern: PATTERN), SCOPE_CONFIG).start_scope
+# result = RubyProf.stop
+
+# PRINTERS = [
+#   RubyProf::FlatPrinter, 
+#   RubyProf::FlatPrinterWithLineNumbers,
+#   RubyProf::GraphPrinter,
+#   RubyProf::GraphHtmlPrinter
+# ]
+# 
+# PRINTERS.each.with_index do |p, i|
+#   File.open("report#{i}.txt", 'w') { |f| p.new(result).print(f, min_percent: 2) }
+# end
+
+printer = RubyProf::MultiPrinter.new(result)
+printer.print(path: '.', profile: 'profile')

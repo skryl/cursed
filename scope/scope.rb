@@ -25,13 +25,13 @@ class Scope < Window
 
     @screens.first.show
     @screens.first.select
-    start_scope
   end
 
   def start_scope
     @cwindow.init_display do
       refresh!
       loop do 
+        break if @exit
         Curses.getch.tap do |input| 
           react_to_input(input) if input 
         end
@@ -58,8 +58,8 @@ class Scope < Window
       when ?H then scroll_instrument(:left)
       when ?n then change_screen(:right)
       when ?p then change_screen(:left) 
+      when ?q then @exit = true
       when ?b then binding.pry
-      when ?q then exit
       when 32.chr then step
       when ?f then step(10)
       when ?F then step(100)
@@ -180,11 +180,37 @@ class Scope < Window
 # header / footer
   
   def header_content
-    <<-eos
-mode: #{@mode.upcase}  screen: #{active_screen.title}  learning: #{@htm.learning}  columns: #{@htm.num_columns}  inputs: #{@htm.num_inputs}  input_size: #{Column::INPUT_SIZE}  min_overlap: #{ProximalDendrite::MIN_OVERLAP}  desired_local_activity: #{Column::DESIRED_LOCAL_ACTIVITY}
-cycles: #{@htm.cycles} step_time: #{@step_time.round(2)} ir: #{@htm.inhibition_radius}  activity_ratio: #{@htm.activity_ratio} active_columns: #{@htm.active_columns.count} 
-active_cells: #{@htm.active_cells.count} learning_cells: #{@htm.learning_cells.count} pred_cells: #{@htm.predicted_cells.count}
-    eos
+    header = {
+      status: {
+        mode:       @mode.upcase,
+        screen:     active_screen.title,
+        cycles:     @htm.cycles,
+        step_time:  @step_time.round(2),
+        inputs:     @htm.num_inputs,
+        columns:    @htm.num_columns,
+        cells:      @htm.num_cells },
+
+      columns: {
+        input_size:      Column::INPUT_SIZE,
+        min_overlap:     ProximalDendrite::MIN_OVERLAP,
+        iradius:         @htm.inhibition_radius,
+        des_local_act:   Column::DESIRED_LOCAL_ACTIVITY,
+        active_columns:  @htm.active_columns.count,
+        col_act_ratio:   @htm.column_activity_ratio },
+
+      cells: {
+        learning_cells:   @htm.learning_cells.count,
+        predicted_cells:  @htm.predicted_cells.count,
+        active_cells:     @htm.active_cells.count,
+        cell_act_ratio:   @htm.cell_activity_ratio }
+    }
+
+    len = header.values.map(&:to_a).flatten(1).map(&:join).map(&:length).max + 2
+    header.inject('') do |str, (title, fields)|
+      str << (title.to_s.upcase << ': ').ljust(10)
+      fields.each { |name, val| str <<  (name.to_s << ': ' << val.to_s).ljust(len) << ' ' }
+      str << "\n"
+    end
   end
 
   def menu_content
@@ -192,14 +218,15 @@ active_cells: #{@htm.active_cells.count} learning_cells: #{@htm.learning_cells.c
     when :normal
       ''
     when :menu
-      %Q(PANELS: #{hidden_child_index(active_screen)} INSTRUMENTS: #{hidden_child_index(active_panel)})
+      str = ''
+      str << "PANELS: #{hidden_child_index(active_screen)}\n"
+      str << "INSTRUMENTS: #{hidden_child_index(active_panel)}" 
     end
   end
 
   def hidden_child_index(window)
     window.hidden_children.map.with_index{ |c,i| "[#{i}](#{c.title})" }.join(' ')
   end
-
 
 # simulation
 

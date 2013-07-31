@@ -13,7 +13,7 @@ class HTM
 
   TEMPORAL_START = 100
 
-  PUBLIC_VARS = %i(cycles learning num_columns num_inputs inhibition_radius active_columns cells columns inputs)
+  PUBLIC_VARS = %i(cycles learning num_columns num_cells num_inputs inhibition_radius active_columns cells columns inputs)
   HASH_ATTRS  = PUBLIC_VARS
   SHOW_ATTRS  = HASH_ATTRS - %i(cells columns inputs)
 
@@ -27,7 +27,7 @@ class HTM
     @pattern = params[:pattern]
     @learning = true
     @cycles = 0
-    @num_columns, @num_inputs = COLUMNS, INPUTS
+    @num_columns, @num_inputs, @num_cells = COLUMNS, INPUTS, COLUMNS * Column::CELL_COUNT
     @inhibition_radius = INIT_INHIBITION_RADIUS
     @inputs = Array.new(@num_inputs) { |i| Input.new(i) } 
     @columns = Array.new(@num_columns) { Column.new(self, @inputs) }
@@ -38,6 +38,7 @@ class HTM
 
   def step(new_input=nil)
     step!
+    # allow spacial pooler to stabilize
     perform_temporal_pooling if @cycles > TEMPORAL_START
     perform_spacial_pooling
   end
@@ -85,8 +86,12 @@ class HTM
     adjust_inhibition_radius
   end
 
-  def activity_ratio
+  def column_activity_ratio
     (@active_columns.count / num_columns.to_f).round(2)
+  end
+
+  def cell_activity_ratio
+    (active_cells.count / num_cells.to_f).round(2)
   end
 
   def adjust_inhibition_radius
