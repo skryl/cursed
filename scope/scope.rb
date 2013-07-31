@@ -4,7 +4,7 @@ require_relative 'window'
 
 class Scope < Window
 
-  HEADER_HEIGHT = 4
+  HEADER_HEIGHT = 5
   FOOTER_HEIGHT = 4
 
   attr_reader :htm
@@ -182,7 +182,8 @@ class Scope < Window
   def header_content
     <<-eos
 mode: #{@mode.upcase}  screen: #{active_screen.title}  learning: #{@htm.learning}  columns: #{@htm.num_columns}  inputs: #{@htm.num_inputs}  input_size: #{Column::INPUT_SIZE}  min_overlap: #{ProximalDendrite::MIN_OVERLAP}  desired_local_activity: #{Column::DESIRED_LOCAL_ACTIVITY}
-cycles: #{@htm.cycles} step_time: #{@step_time.round(2)} ir: #{@htm.inhibition_radius}  activity_ratio: #{@htm.activity_ratio} active_columns: #{@htm.active_columns.count} active_cells: #{@htm.active_cells.count} learning_cells: #{@htm.learning_cells.count}
+cycles: #{@htm.cycles} step_time: #{@step_time.round(2)} ir: #{@htm.inhibition_radius}  activity_ratio: #{@htm.activity_ratio} active_columns: #{@htm.active_columns.count} 
+active_cells: #{@htm.active_cells.count} learning_cells: #{@htm.learning_cells.count} pred_cells: #{@htm.predicted_cells.count}
     eos
   end
 

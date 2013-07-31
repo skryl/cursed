@@ -1,9 +1,11 @@
+require_relative '../common/temporal_attributes'
 require_relative 'proximal_dendrite'
 require_relative 'cell'
 require 'forwardable'
 
 class Column
   include Inspector
+  include TemporalAttributes
   extend  Forwardable
 
   CELL_COUNT = 4
@@ -131,15 +133,18 @@ class Column
 
   def ensure_active_and_learning
     @cells.each(&:activate_and_check_learning)
-    predicted_next = @cells.select(&:predicted_next?)
+    sequence_cells = @cells.select(&:predicted_next?)
 
-    if predicted_next.empty?
+    if sequence_cells.empty?
       @cells.each(&:activate!)
+    else
+      sequence_cells.each(&:activate!)
     end
 
     unless @cells.any?(&:learning?)
-      if (best_cell = best_matching_cell)
-        best_cell.set_learning_segment
+      best_cell, best_segment = use_global_time(1) { best_matching_cell }
+      if (best_cell)
+        best_cell.set_learning_segment(best_segment)
       else
         fewest_segment_cell.add_learning_segment
       end
@@ -154,7 +159,7 @@ class Column
         select  { |(c, bms, aoverlap)| bms }.
         sort_by { |(c, bms, aoverlap)| aoverlap }.
         last
-    cell && cell.first
+    cell && cell[0..1]
   end
 
   def fewest_segment_cell

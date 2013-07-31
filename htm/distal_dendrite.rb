@@ -37,10 +37,9 @@ class DistalDendrite < Dendrite
     overlap < MIN_THRESHOLD ? 0 : overlap
   end
 
-  # TODO: make sure i work!
   def strengthen!
     active_synapses.each { |syn| syn.strengthen! }
-    inactive_synapses.each { |syn| syn.weaken! }
+    # inactive_synapses.each { |syn| syn.weaken! }
   end
 
   def weaken!
@@ -48,11 +47,14 @@ class DistalDendrite < Dendrite
   end
 
   def add_new_synapses(cells)
-    synapse_count = NEW_SYNAPSE_COUNT - active_synapses.count
-    return unless synapse_count > 0
+    own_cells = @synapses.map { |s| s.input }
+    active_cells = active_synapses.map { |s| s.input }
+    new_synapse_count = NEW_SYNAPSE_COUNT - active_cells.count
 
-    inputs = cells.sample(synapse_count)
-    @synapses += inputs.map { |inp| CellSynapse.new(inp, active: true) }
+    if new_synapse_count > 0
+      cells = cells.reject { |c| own_cells.include?(c) }.sample(new_synapse_count)
+      @synapses += cells.map { |c| CellSynapse.new(c, active: true) }
+    end
   end
 
 private

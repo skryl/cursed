@@ -54,6 +54,7 @@ class Cell
     @learning = false
     @active_segment = nil
     @learning_segment = nil
+    self.predicted_next = false
   end
 
 # segments
@@ -62,9 +63,9 @@ class Cell
     @segments.select(&:active?)
   end
 
-  def set_learning_segment
+  def set_learning_segment(seg)
     learn!
-    @learning_segment = best_matching_segment 
+    @learning_segment = seg
   end
 
   def add_learning_segment
@@ -76,19 +77,19 @@ class Cell
 
   def predict_next_state
     @active_segments = active_segments
-    self.predicted   = @active_segments.any?
+    self.predicted = @active_segments.any?
   end
 
 # activation
   
   def activate_and_check_learning
-    if predicted
+    if predicted?
       @active = true
       @active_segment = \
         use_global_time(1) { get_active_segment }
 
       self.predicted_next = @active_segment.sequence?
-      @learning = predicted_next && @active_segment.learning?
+      @learning = predicted_next? && @active_segment.learning?
     end
   end
 

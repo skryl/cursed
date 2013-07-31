@@ -13,7 +13,8 @@ class CellSynapse < Synapse
   show_fields 
   hash_fields :input
 
-  HASH_ATTRS  = PUBLIC_VARS + %i(active_aggressive? active_non_aggressive? learning_non_aggressive?)
+  PUBLIC_VARS = %i(permanence input)
+  HASH_ATTRS  = PUBLIC_VARS + %i(input_index active_aggressive? active_non_aggressive? learning_non_aggressive?)
   SHOW_ATTRS  = HASH_ATTRS  - %i(input)
 
   attr_reader *PUBLIC_VARS
@@ -31,6 +32,10 @@ class CellSynapse < Synapse
   end
 
 private
+
+  def input_index
+    input.index
+  end
 
   def _active_aggressive?
     @input.active?

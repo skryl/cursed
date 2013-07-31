@@ -11,7 +11,7 @@ class HTM
   INPUTS = 80
   INIT_INHIBITION_RADIUS = 10
 
-  PUBLIC_VARS = %i(cycles learning num_columns num_inputs inhibition_radius active_columns active_cells cells columns inputs)
+  PUBLIC_VARS = %i(cycles learning num_columns num_inputs inhibition_radius active_columns cells columns inputs)
   HASH_ATTRS  = PUBLIC_VARS
   SHOW_ATTRS  = HASH_ATTRS - %i(cells columns inputs)
 
@@ -31,22 +31,30 @@ class HTM
     @columns = Array.new(@num_columns) { Column.new(self, @inputs) }
     @cells = @columns.flat_map(&:cells)
     @active_columns = []
-    @active_cells = []
     self.learning_cells = []
   end
 
   def step(new_input=nil)
-    reset!
+    step!
     perform_temporal_pooling
     perform_spacial_pooling
   end
 
+  # only for header display
+  #
+  def active_cells; @cells.select(&:active?) end
+  def predicted_cells; @cells.select(&:predicted?) end
+
   # reset state
   #
-  def reset!
+  def step!
     @cycles += 1
+
+    # update inputs
     new_input ||=  @pattern[@cycles % 2]
     @inputs.each.with_index { |inp, i| inp.value = new_input[i] }
+
+    # cache and prepare for pooling
     @active_columns = @columns.select { |c| c.active? }
     @cells.each(&:reset!)
   end
@@ -55,7 +63,6 @@ class HTM
   # 
   def perform_temporal_pooling
     @active_columns.each { |c| c.ensure_active_and_learning }
-    @active_cells = @cells.select { |c| c.active? }
     self.learning_cells = @cells.select { |c| c.learning? }
     @cells.each { |c| c.snapshot! }
 
