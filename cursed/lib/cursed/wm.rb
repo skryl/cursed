@@ -2,18 +2,22 @@ require 'benchmark'
 require_relative 'screen'
 require_relative 'window'
 
-class Scope < Window
+class Cursed::WM < Cursed::Window
+  include Cursed
 
   HEADER_HEIGHT = 5
   FOOTER_HEIGHT = 4
 
-  attr_reader :htm
+  attr_reader :data_obj, :mode, :step_time
 
-  def initialize(htm, config)
+  def initialize(data_obj, config)
     @mode = :normal
     super(window: Curses.stdscr, border: false)
-    @htm = htm
+    @data_obj = data_obj
     @step_time = 0.0
+
+    @header_content = config[:header]
+    @keybindings = config[:keybindings] || {}
 
     @header = Window.new(parent: self, title: 'Cortex v0.1', border: true, bc: :blue, fg: :yellow, height: HEADER_HEIGHT)
     @body   = Window.new(parent: self, title: :body, border: false, exclusive: true,
@@ -27,7 +31,7 @@ class Scope < Window
     @screens.first.select
   end
 
-  def start_scope
+  def start
     @cwindow.init_display do
       refresh!
       loop do 
@@ -40,6 +44,8 @@ class Scope < Window
   end
 
   def react_to_input(input)
+    check_custom_bindings(input)
+
     case @mode
     when :normal
       case input
@@ -60,9 +66,6 @@ class Scope < Window
       when ?p then change_screen(:left) 
       when ?q then @exit = true
       when ?b then binding.pry
-      when 32.chr then step
-      when ?f then step(10)
-      when ?F then step(100)
       end
     when :menu
       case input
@@ -91,6 +94,10 @@ class Scope < Window
       end
     end
     refresh!
+  end
+
+  def check_custom_bindings(input)
+    @keybindings[input] && instance_exec(&@keybindings[input])
   end
 
   def refresh
@@ -180,35 +187,16 @@ class Scope < Window
 # header / footer
   
   def header_content
-    header = {
-      status: {
-        mode:       @mode.upcase,
-        screen:     active_screen.title,
-        cycles:     @htm.cycles,
-        step_time:  @step_time.round(2),
-        inputs:     @htm.num_inputs,
-        columns:    @htm.num_columns,
-        cells:      @htm.num_cells },
+    len = @header_content.values.
+      map(&:to_a).
+      flatten(1).
+      map{ |(k,v)| [k, call_or_ret(v)] }.
+      map(&:join).
+      map(&:length).max + 2
 
-      columns: {
-        input_size:      Column::INPUT_SIZE,
-        min_overlap:     ProximalDendrite::MIN_OVERLAP,
-        iradius:         @htm.inhibition_radius,
-        des_local_act:   Column::DESIRED_LOCAL_ACTIVITY,
-        active_columns:  @htm.active_columns.count,
-        col_act_ratio:   @htm.column_activity_ratio },
-
-      cells: {
-        learning_cells:   @htm.learning_cells.count,
-        predicted_cells:  @htm.predicted_cells.count,
-        active_cells:     @htm.active_cells.count,
-        cell_act_ratio:   @htm.cell_activity_ratio }
-    }
-
-    len = header.values.map(&:to_a).flatten(1).map(&:join).map(&:length).max + 2
-    header.inject('') do |str, (title, fields)|
-      str << (title.to_s.upcase << ': ').ljust(10)
-      fields.each { |name, val| str <<  (name.to_s << ': ' << val.to_s).ljust(len) << ' ' }
+    @header_content.inject('') do |str, (title, fields)|
+      str << "#{title.to_s.upcase}:".ljust(10)
+      fields.each { |name, val| str << "#{name}: #{call_or_ret(val)}".ljust(len) << ' ' } 
       str << "\n"
     end
   end
@@ -233,9 +221,15 @@ class Scope < Window
   def step(n=1)
     time = \
       Benchmark.realtime do
-        n.times { @htm.step }
+        n.times { @data_obj.step }
       end
     @step_time = time/n
+  end
+
+private
+
+  def call_or_ret(val)
+    val.is_a?(Proc) ? instance_exec(&val).to_s : val.to_s
   end
 
 end

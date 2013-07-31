@@ -1,4 +1,4 @@
-class Buffer
+class Cursed::Buffer
   extend Forwardable
   def_delegator :@window, :effective_height, :height
   def_delegator :@window, :effective_width, :width

@@ -1,6 +1,7 @@
 require_relative 'instrument'
 
-class Panel < Window
+class Panel < Cursed::Window
+  include Cursed
 
   def initialize(config, **opts)
     super(config.merge(opts))

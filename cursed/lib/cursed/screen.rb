@@ -1,7 +1,8 @@
 require_relative 'window'
 require_relative 'panel'
 
-class Screen < Window
+class Cursed::Screen < Cursed::Window
+  include Cursed
 
   def initialize(config, **opts)
     super(config.merge(opts))

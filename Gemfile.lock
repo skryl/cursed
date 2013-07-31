@@ -1,3 +1,8 @@
+PATH
+  remote: cursed
+  specs:
+    cursed (0.0.1)
+
 GEM
   remote: https://rubygems.org/
   specs:
@@ -37,6 +42,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  cursed!
   pry
   pry-byebug
   pry-stack_explorer

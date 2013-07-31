@@ -1,8 +1,9 @@
 require_relative 'full_grid'
 require_relative 'minimal_grid'
 
-class Instrument < Window
-  extend Forwardable
+class Cursed::Instrument < Cursed::Window
+  include Cursed
+  extend  Forwardable
 
   def_delegators :@grid, :scroll
   attr_reader :title
@@ -20,7 +21,7 @@ class Instrument < Window
   def minimal?; @type == :minimal end
 
   def streams
-    @data = @view[htm]
+    @data = @view[data_obj]
     if @data.first.is_a? Array
       @maps.map { |streamf| @data.map { |r| r.map(&streamf) } }
     else

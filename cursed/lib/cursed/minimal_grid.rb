@@ -1,6 +1,6 @@
 require_relative 'grid'
 
-class MinimalGrid < Grid
+class Cursed::MinimalGrid < Cursed::Grid
 
   CELL_SIZE = 2
   

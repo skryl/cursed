@@ -2,8 +2,9 @@ require_relative 'curses_window'
 require_relative 'buffer'
 require 'forwardable'
 
-class Window
-  extend Forwardable
+class Cursed::Window
+  include Cursed
+  extend  Forwardable
   def_delegators :@cwindow, :write, :colorize
 
   ATTRIBUTES    = [:height, :width, :top, :left].freeze
@@ -47,8 +48,8 @@ class Window
 
   # TODO: need better way to globalize data generator
   #
-  def htm
-    @htm ||= @parent.htm
+  def data_obj
+    @data_obj ||= @parent.data_obj
   end
 
   def show 

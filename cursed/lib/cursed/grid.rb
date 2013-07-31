@@ -1,4 +1,4 @@
-class Grid
+class Cursed::Grid
   extend Forwardable
 
   BAR = "|"

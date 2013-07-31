@@ -1,6 +1,6 @@
 require_relative 'grid'
 
-class FullGrid < Grid
+class Cursed::FullGrid < Cursed::Grid
 
   CELL_SIZE = 2
 
