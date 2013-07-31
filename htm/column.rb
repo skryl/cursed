@@ -34,7 +34,7 @@ class Column
   end
 
   def active?
-    overlap >= min_local_activity
+    overlap > min_local_activity
   end
 
   def active_without_predictions?

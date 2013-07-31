@@ -11,6 +11,8 @@ class HTM
   INPUTS = 80
   INIT_INHIBITION_RADIUS = 10
 
+  TEMPORAL_START = 100
+
   PUBLIC_VARS = %i(cycles learning num_columns num_inputs inhibition_radius active_columns cells columns inputs)
   HASH_ATTRS  = PUBLIC_VARS
   SHOW_ATTRS  = HASH_ATTRS - %i(cells columns inputs)
@@ -36,7 +38,7 @@ class HTM
 
   def step(new_input=nil)
     step!
-    perform_temporal_pooling
+    perform_temporal_pooling if @cycles > TEMPORAL_START
     perform_spacial_pooling
   end
 
@@ -51,7 +53,7 @@ class HTM
     @cycles += 1
 
     # update inputs
-    new_input ||=  @pattern[@cycles % 2]
+    new_input ||=  @pattern[@cycles % @pattern.size]
     @inputs.each.with_index { |inp, i| inp.value = new_input[i] }
 
     # cache and prepare for pooling
@@ -60,16 +62,16 @@ class HTM
   end
 
   # temporal pooling
-  # 
+  # 1. activate predictive cells and select one learning cell per column
+  # 2. reinforce learning and correctly predicted segments
+  # 3. make predictions for the next iteration
+  #
   def perform_temporal_pooling
     @active_columns.each { |c| c.ensure_active_and_learning }
     self.learning_cells = @cells.select { |c| c.learning? }
+    @columns.each { |c| c.reinforce_cells }
+    @columns.each { |c| c.generate_predictions }
     @cells.each { |c| c.snapshot! }
-
-    if @cycles > 2
-      @columns.each { |c| c.reinforce_cells }
-      @columns.each { |c| c.generate_predictions }
-    end
   end
 
   # spatial pooling
@@ -83,22 +85,24 @@ class HTM
     adjust_inhibition_radius
   end
 
-  # def while_learning
-  #   @learning = true
-  #   yield
-  #   @learning = false
-  # end
-
   def activity_ratio
     (@active_columns.count / num_columns.to_f).round(2)
   end
 
   def adjust_inhibition_radius
-    @inhibition_radius = average_receptive_field_size
+    @inhibition_radius = (@inhibition_radius + average_receptive_field_size) / 2
   end
 
   def average_receptive_field_size
     @columns.reduce(0) { |a,c| a + c.raw_overlap} / @columns.count
+  end
+
+private
+
+  def while_learning
+    @learning = true
+    yield
+    @learning = false
   end
 
 end

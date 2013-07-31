@@ -1,10 +1,12 @@
+require_relative '../common/temporal_attributes'
 require_relative 'cell_synapse'
 require_relative 'dendrite'
 
 class DistalDendrite < Dendrite
+  include TemporalAttributes
   include Inspector
 
-  MIN_THRESHOLD = 1
+  MIN_THRESHOLD = 5
   ACTIVATION_THRESHOLD = 3
   NEW_SYNAPSE_COUNT = 20
 
@@ -39,7 +41,7 @@ class DistalDendrite < Dendrite
 
   def strengthen!
     active_synapses.each { |syn| syn.strengthen! }
-    # inactive_synapses.each { |syn| syn.weaken! }
+    inactive_synapses.each { |syn| syn.weaken! }
   end
 
   def weaken!

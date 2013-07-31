@@ -108,6 +108,7 @@ class Cell
   def reinforce
     if learning?
       reinforce_learning_segment if @learning_segment
+      # add_predictive_segment
       use_global_time(1) { @active_segments.each(&:strengthen!) }
     elsif (prev_predicted? && !predicted?)
       use_global_time(1) { @active_segments.each(&:weaken!) }
@@ -117,14 +118,15 @@ class Cell
   def reinforce_learning_segment
     @learning_segment.sequence!
     use_global_time(1) { @learning_segment.add_new_synapses(learning_cells) }
-    @segments << @learning_segment unless @segments.include?(@learning_segment)
+    unless @segments.include?(@learning_segment) || @learning_segment.synapses.count == 0 
+      @segments << @learning_segment 
+    end
   end
 
-
-  # take a temporal snapshot of all teh things
-  #
-  def snapshot!
-    @segments.each { |s| s.snapshot! }
+  def add_predictive_segment
+    predictive_segment = DistalDendrite.new
+    use_global_time(2) { predictive_segment.add_new_synapses(learning_cells) }
+    @segments << @learning_segment 
   end
 
   def best_matching_segment
@@ -137,6 +139,9 @@ class Cell
     seg && seg.first
   end
 
+  def snapshot!
+    @segments.each { |s| s.snapshot! }
+  end
 
   # def learning_neighbors
     # column.neighbors(LEARNING_RADIUS).flat_map(&:cells).select(&:learning?)
