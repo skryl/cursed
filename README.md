@@ -128,6 +128,9 @@ Cursed::WM.new(HTM.new(pattern: PATTERN), CURSED_CONFIG).start
 
 ## Contributing
 
+This release is very very beta. There are bugs. There are no tests. Stuff may
+break. If you have an idea for how to fix it, follow directions below...
+
 1. Fork it
 2. Create your feature branch (`git checkout -b my-new-feature`)
 3. Commit your changes (`git commit -am 'Add some feature'`)
