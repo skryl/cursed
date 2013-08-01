@@ -20,6 +20,41 @@ Or install it yourself as:
 
     $ gem install cursed
 
+## Default Keybindings
+
+```
+# Normal Mode
+h   - left
+j   - down
+k   - up
+l   - right
+H   - scroll left
+J   - scroll down
+K   - scroll up
+D   - scroll down 10
+U   - scroll up 10
+L   - scroll right
+x   - hide instrument
+X   - hide panel
+m   - show menu
+n   - next screen
+p   - prev screen
+[s] - step simulation
+f   - step simulation 10 times
+F   - step simulation 100 times
+b   - break
+q   - exit
+
+# Menu Mode
+m        - hide menu
+(0-9)    - show instrument (0-9)
+^(0-9) - show panel (0-9)
+
+# Legend
+[s] - spacebar
+^   - shift
+```
+
 ## Usage
 
 Cursed uses a config hash to setup the layout, custom keybindings, and header info, as
