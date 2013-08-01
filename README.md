@@ -31,9 +31,9 @@ l   - right
 H   - scroll left
 J   - scroll down
 K   - scroll up
+L   - scroll right
 D   - scroll down 10
 U   - scroll up 10
-L   - scroll right
 x   - hide instrument
 X   - hide panel
 m   - show menu
