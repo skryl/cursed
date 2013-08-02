@@ -21,11 +21,11 @@ class Cursed::WM < Cursed::Window
 
     @header = Window.new(parent: self, title: 'Cortex v0.1', border: true, bc: :blue, fg: :yellow, height: HEADER_HEIGHT)
     @body   = Window.new(parent: self, title: :body, border: false, exclusive: true,
-                top: @header.top + @header.height, height: self.effective_height - @header.height)
+      top: @header.top + @header.height, height: self.effective_height - @header.height)
     @screens = config[:screens].map { |config| 
       Screen.new(config, parent: @body, visible: false, border: false, flow: :horizontal)} 
     @menu = Window.new(parent: self, title: :menu, border: true, visible: false, bc: :blue, fg: :yellow,
-        height: FOOTER_HEIGHT, top: self.top + self.height - FOOTER_HEIGHT)
+      height: FOOTER_HEIGHT, top: self.top + self.height - FOOTER_HEIGHT)
 
     @screens.first.show
     @screens.first.select
