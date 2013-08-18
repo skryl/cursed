@@ -8,9 +8,9 @@ Gem::Specification.new do |spec|
   spec.version       = Cursed::VERSION
   spec.authors       = ["Alex Skryl"]
   spec.email         = ["rut216@gmail.com"]
-  spec.description   = %q{A curses based window manager}
-  spec.summary       = %q{A curses based window manager}
-  spec.homepage      = "http://skryl.org"
+  spec.description   = %q{A curses based window manager for displaying large amounts of tabular data.}
+  spec.summary       = %q{A curses based window manager.}
+  spec.homepage      = "http://github.com/skryl/cursed"
   spec.license       = "MIT"
 
   spec.files         = `git ls-files`.split($/)
