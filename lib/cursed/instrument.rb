@@ -21,11 +21,11 @@ class Cursed::Instrument < Cursed::Window
   def minimal?; @type == :minimal end
 
   def streams
-    @data = @view[data_obj]
-    if @data.first.is_a? Array
-      @maps.map { |streamf| @data.map { |r| r.map(&streamf) } }
+    @content = @view[data]
+    if @content.first.is_a? Array
+      @maps.map { |streamf| @content.map { |r| r.map(&streamf) } }
     else
-      @maps.map { |streamf| @data.map(&streamf) }
+      @maps.map { |streamf| @content.map(&streamf) }
     end
   end
 

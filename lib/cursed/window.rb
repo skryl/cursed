@@ -15,7 +15,7 @@ class Cursed::Window
   FLOW_ATTRS    = [:size, :offset].freeze
   DEFAULT_FLOW  = :vertical
 
-  attr_reader   :children, :title, :flow
+  attr_reader   :buffer, :children, :title, :flow
   attr_accessor :fixed_height, :fixed_width, :fixed_top, :fixed_left
   attr_accessor :auto_height, :auto_width, :auto_top, :auto_left
   def_delegators :@buffer, :puts, :<<
@@ -48,8 +48,8 @@ class Cursed::Window
 
   # TODO: need better way to globalize data generator
   #
-  def data_obj
-    @data_obj ||= @parent.data_obj
+  def data
+    @data ||= @parent.data
   end
 
   def show 

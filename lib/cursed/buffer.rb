@@ -31,4 +31,19 @@ class Cursed::Buffer
     @content = ''
   end
 
+  # properly justify fields passed in as:
+  #   [[Row, [[Field, Val], ...]], ...]
+  #
+  def format_fields(attributes)
+    maxlen = attributes.flat_map { |(row, fields)| fields }.
+                          map { |field| field.join.length }.
+                          max
+
+    @content = attributes.inject('') do |str, (row, fields)|
+      str << "#{row.to_s.upcase}:".ljust(10)
+      fields.map { |name, val| str << "#{name}: #{val}".ljust(maxlen+2) << ' ' } 
+      str << "\n"
+    end
+  end
+
 end
