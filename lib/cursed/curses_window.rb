@@ -6,7 +6,7 @@ class Curses::Window
   alias_method :top,    :begy
   alias_method :left,   :begx
 
-  COLOR  = 
+  COLOR  =
     { red:     Curses::COLOR_RED,
       blue:    Curses::COLOR_BLUE,
       cyan:    Curses::COLOR_CYAN,
@@ -16,7 +16,7 @@ class Curses::Window
       yellow:  Curses::COLOR_YELLOW,
       magenta: Curses::COLOR_MAGENTA }
 
-  STYLE = 
+  STYLE =
     { reverse:    Curses::A_REVERSE,
       standout:   Curses::A_STANDOUT,
       bold:       Curses::A_BOLD,
@@ -25,7 +25,7 @@ class Curses::Window
       normal:     Curses::A_NORMAL }
 
   def init_display
-    Curses.noecho
+    Curses.noecho        
     Curses.init_screen
     Curses.stdscr.keypad(true)
     Curses.start_color

@@ -8,13 +8,13 @@ class Cursed::WM < Cursed::Window
   HEADER_HEIGHT = 5
   FOOTER_HEIGHT = 4
 
-  attr_reader :data, :binding_mode, :step_time
+  attr_reader :data, :mode, :step_time
 
   def initialize(data, config)
     super(window: Curses.stdscr, border: false)
     @data = data
     @step_time = 0.0
-    @binding_mode = :normal
+    @mode = :normal
 
     @header_content = config[:header] || {}
     @keybindings    = config[:keybindings] || {}
@@ -23,8 +23,8 @@ class Cursed::WM < Cursed::Window
     @header  = Window.new(parent: self, title: 'Cortex v0.1', border: true, bc: :blue, fg: :yellow, height: HEADER_HEIGHT)
     @body    = Window.new(parent: self, title: :body, border: false, exclusive: true,
                  top: @header.top + @header.height, height: self.effective_height - @header.height)
-    @screens = config[:screens].map { |config| 
-                 Screen.new(config, parent: @body, visible: false, border: false, flow: :horizontal)} 
+    @screens = config[:screens].map { |config|
+                 Screen.new(config, parent: @body, visible: false, border: false, flow: :horizontal)}
     @menu    = Window.new(parent: self, title: :menu, border: true, visible: false, bc: :blue, fg: :yellow,
                  height: FOOTER_HEIGHT, top: self.top + self.height - FOOTER_HEIGHT)
 
@@ -33,38 +33,34 @@ class Cursed::WM < Cursed::Window
     @screens.first.select
   end
 
-  def start
+  def run
     @cwindow.init_display do
       refresh!
-      catch(:exit) do
-        loop do 
-          Curses.getch.tap do |input| 
-            check_user_defined_bindings(input)
-            check_default_bindings(input)
-            refresh!
-          end
-        end
-      end
+      catch(:exit) {
+        loop {
+          react_to_input
+          refresh!
+      }}
     end
   end
 
 # modes
 
-  def set_binding_mode!(mode)
+  def set_mode!(mode)
     case mode
     when :menu
       @menu.show
     when :normal
       @menu.hide
     end
-    @binding_mode = mode 
+    @mode = mode
   end
 
-  def normal_mode?; @binding_mode == :normal end
-  def menu_mode?; @binding_mode == :menu end
+  def normal_mode?; @mode == :normal end
+  def menu_mode?; @mode == :menu end
 
 # screens / panels / instruments
-  
+
   def show_screen(direction)
     case direction
     when :right
@@ -110,31 +106,27 @@ class Cursed::WM < Cursed::Window
   def show_panel(num)
     panel = active_screen.hidden_children[num]
     panel && panel.show
-    set_binding_mode!(:normal)
+    set_mode!(:normal)
   end
 
   def show_instrument(num)
     ins = active_panel.hidden_children[num]
     ins && ins.show
-    set_binding_mode!(:normal)
+    set_mode!(:normal)
   end
 
   def scroll_instrument(direction, **opts)
     active_instrument.scroll(direction, opts)
   end
 
-# header / menu
+private
 
-  def menu_content
-    case @binding_mode
-    when :normal
-      ''
-    when :menu
-      "PANELS: #{hidden_children(active_screen)}\nINSTRUMENTS: #{hidden_children(active_panel)}" 
+  def react_to_input
+    Curses.getch.tap do |input|
+      check_user_defined_bindings(input)
+      check_default_bindings(input)
     end
   end
-
-private
 
   def refresh
     @header.buffer.format_fields(header_attributes)
@@ -157,7 +149,7 @@ private
 # default bindings
 
   def check_default_bindings(input)
-    case @binding_mode
+    case @mode
     when :normal
       case input
       when ?k then select_instrument(:up)
@@ -166,7 +158,7 @@ private
       when ?h then select_instrument(:left)
       when ?x then hide_active_instrument
       when ?X then hide_active_panel
-      when ?m then set_binding_mode!(:menu)
+      when ?m then set_mode!(:menu)
       when ?K then scroll_instrument(:up)
       when ?J then scroll_instrument(:down)
       when ?U then scroll_instrument(:up, amt: 10)
@@ -174,13 +166,13 @@ private
       when ?L then scroll_instrument(:right)
       when ?H then scroll_instrument(:left)
       when ?n then show_screen(:right)
-      when ?p then show_screen(:left) 
+      when ?p then show_screen(:left)
       when ?q then throw(:exit)
       when ?b then binding.pry
       end
     when :menu
       case input
-      when ?m then set_binding_mode!(:normal)
+      when ?m then set_mode!(:normal)
       when ?0 then show_instrument(0)
       when ?1 then show_instrument(1)
       when ?2 then show_instrument(2)
@@ -206,14 +198,23 @@ private
     end
   end
 
-# header formatting
+# header / menu
 
   # convert nested hash to [[Row, [[Field, Val], ...]] ... ]
   # and evaluate any procs.
-  # 
+  #
   def header_attributes
-    @header_content.map { |row, fields| 
+    @header_content.map { |row, fields|
       [row, fields.map{ |field, val| [field, call_or_val(val)] }] }
+  end
+
+  def menu_content
+    case @mode
+    when :normal
+      ''
+    when :menu
+      "PANELS: #{hidden_children(active_screen)}\nINSTRUMENTS: #{hidden_children(active_panel)}"
+    end
   end
 
 # helpers
