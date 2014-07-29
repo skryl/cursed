@@ -8,14 +8,14 @@ class Cursed::Grid
   ALTERNATE_COLOR = :red
   Infinity = 1.0/0.0
 
-  def_delegator  :@window, :effective_height, :height
-  def_delegator  :@window, :effective_width,  :width
-  def_delegators :@window, :write, :colorize
+  def_delegator  :@container, :effective_height, :height
+  def_delegator  :@container, :effective_width,  :width
+  def_delegators :@container, :write, :colorize
   attr_reader    :rows, :cols, :rratio, :cratio, :cell_size, :box_size,
                  :vscroll, :hscroll, :cells
 
-  def initialize(window, **opts)
-    @window = window
+  def initialize(container, opts)
+    @container = container
     @alt_fg = ALTERNATE_COLOR
     # colors (foreground, background, grid)
     @fg, @bg, @gc = opts.values_at(:fg, :bg, :gc)

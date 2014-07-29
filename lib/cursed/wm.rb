@@ -1,4 +1,4 @@
-class Cursed::WM < Cursed::Window
+class Cursed::WM < Cursed::Container
 
   attr_reader :mode, :header, :menu, :body, :screens
 
@@ -8,12 +8,12 @@ class Cursed::WM < Cursed::Window
 
   def initialize(config)
     super(nil, config)
-    initialize_window_layout(config)
+    initialize_layout(config)
     set_mode!(:normal)
   end
 
   def run
-    @cwindow.init_display do
+    @window.init_display do
       refresh!
       catch(:exit) {
         loop {
@@ -94,7 +94,7 @@ class Cursed::WM < Cursed::Window
     set_mode!(:normal)
   end
 
-  def scroll_instrument(direction, **opts)
+  def scroll_instrument(direction, opts)
     active_instrument.scroll(direction, opts)
   end
 
@@ -106,7 +106,7 @@ private
 
 # initialization
 
-  def initialize_window_layout(config)
+  def initialize_layout(config)
     # object creation order matters here (dont change!)
     @header = Header.new(self, config[:header])
     @body   = Body.new(self, config[:body])
@@ -129,10 +129,10 @@ private
       "PANELS: #{hidden_children(active_screen)}\nINSTRUMENTS: #{hidden_children(active_panel)}" : '')
   end
 
-# windows
+# containers
 
-  def hidden_children(window)
-    window.hidden_children.map.with_index{ |c,i| "[#{i}](#{c.title})" }.join(' ')
+  def hidden_children(container)
+    container.hidden_children.map.with_index{ |c,i| "[#{i}](#{c.title})" }.join(' ')
   end
 
 # keyboard input

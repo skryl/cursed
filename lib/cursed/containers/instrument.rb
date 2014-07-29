@@ -1,4 +1,4 @@
-class Cursed::Instrument < Cursed::Window
+class Cursed::Instrument < Cursed::Container
   extend  Forwardable
 
   def_delegators :@grid, :scroll
@@ -22,7 +22,7 @@ class Cursed::Instrument < Cursed::Window
   def refresh
     super
     @grid.display(streams)
-    @cwindow.noutrefresh
+    @window.noutrefresh
   end
 
 end

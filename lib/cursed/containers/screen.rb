@@ -1,4 +1,4 @@
-class Cursed::Screen < Cursed::Window
+class Cursed::Screen < Cursed::Container
 
   def initialize(parent, params)
     super

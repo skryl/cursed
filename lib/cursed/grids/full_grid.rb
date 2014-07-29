@@ -2,8 +2,8 @@ class Cursed::FullGrid < Cursed::Grid
 
   CELL_SIZE = 2
 
-  def initialize(window, **opts)
-    super(window, opts)
+  def initialize(container, opts)
+    super(container, opts)
     @cell_size = opts[:cell_size] || CELL_SIZE
     @box_size = @cell_size + 2
     @cratio = @box_size

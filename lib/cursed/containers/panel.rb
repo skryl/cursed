@@ -1,4 +1,4 @@
-class Panel < Cursed::Window
+class Panel < Cursed::Container
 
   def initialize(parent, params)
     super

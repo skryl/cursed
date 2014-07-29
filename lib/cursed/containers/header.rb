@@ -1,4 +1,4 @@
-class Cursed::Header < Cursed::Window
+class Cursed::Header < Cursed::Container
 
   HEIGHT = 5
 

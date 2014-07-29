@@ -1,10 +1,10 @@
 class Cursed::Buffer
   extend Forwardable
-  def_delegator :@window, :effective_height, :height
-  def_delegator :@window, :effective_width, :width
+  def_delegator :@container, :effective_height, :height
+  def_delegator :@container, :effective_width, :width
 
-  def initialize(window)
-    @window = window
+  def initialize(container)
+    @container = container
     @content = ''
   end
 

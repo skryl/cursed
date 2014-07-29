@@ -1,4 +1,4 @@
-class Cursed::Menu < Cursed::Window
+class Cursed::Menu < Cursed::Container
 
   HEIGHT = 4
 
