@@ -1,7 +1,3 @@
-require_relative 'curses_window'
-require_relative 'buffer'
-require 'forwardable'
-
 class Cursed::Window
   include Cursed
   extend  Forwardable
@@ -13,29 +9,37 @@ class Cursed::Window
   FLOW_OFFSETS  = { vertical: :top, horizontal: :left}.freeze
   FLOW_DIMS     = { vertical: :height, horizontal: :width }.freeze
   FLOW_ATTRS    = [:size, :offset].freeze
-  DEFAULT_FLOW  = :vertical
 
-  attr_reader   :buffer, :children, :title, :flow
+  attr_reader   :parent, :buffer, :children, :title, :flow, :keybindings
   attr_accessor :fixed_height, :fixed_width, :fixed_top, :fixed_left
   attr_accessor :auto_height, :auto_width, :auto_top, :auto_left
   def_delegators :@buffer, :puts, :<<
 
-  def initialize(**params)
-    @children = []
-    @buffer       = Buffer.new(self)
-    @parent       = params[:parent]
-    @cwindow      = params[:window]
-    @exclusive    = params[:exclusive].nil? ? false : params[:exclusive]
-    @border       = params[:border].nil? ? true : params[:border]
-    @flow         = params[:flow] || DEFAULT_FLOW
-    @title        = params[:title] || 'window'
-    @visible      = params[:visible].nil? ? true : params[:visible]
-    @selected     = params[:selected].nil? ? false : params[:selected]
+  def defaults; {} end
+
+  def initialize(parent, params)
+    @parent      = parent
+    params       = defaults.merge(params || {})
+
+    @children    = []
+    @buffer      = Buffer.new(self)
+    @buffer_proc = params[:buffer]
+    @cwindow     = params[:window]
+    @exclusive   = params[:exclusive].nil? ? false : params[:exclusive]
+    @border      = params[:border].nil? ? true : params[:border]
+    @flow        = params[:flow] || :vertical
+    @title       = params[:title] || :window
+    @visible     = params[:visible].nil? ? true : params[:visible]
+    @selected    = params[:selected].nil? ? false : params[:selected]
+    @keybindings = params[:keybindings] || []
 
     # colors (foreground, background, border)
-    @fg = params[:fg] || :white
-    @bg = params[:bg] || :black
-    @bc = params[:bc] || :blue
+    @fg  = params[:fg] || :white
+    @bg  = params[:bg] || :black
+    @bc  = params[:bc] || :blue
+
+    # bring variables into object scope
+    import_user_variables params[:variables] || []
 
     unless @cwindow
       @fixed_height, @fixed_width, @fixed_top, @fixed_left = \
@@ -46,19 +50,13 @@ class Cursed::Window
     @parent.add_child(self) if @parent
   end
 
-  # TODO: need better way to globalize data generator
-  #
-  def data
-    @data ||= @parent.data
-  end
-
-  def show 
-    @visible = true 
+  def show
+    @visible = true
     @parent.adjust_children
   end
 
   def hide
-    @visible = false 
+    @visible = false
     @parent.adjust_children
   end
 
@@ -108,8 +106,8 @@ class Cursed::Window
 
   def next_child(children, active, direction)
     new_idx = \
-      ((children.index(active) + 
-       (direction == :next ? 1 : -1)) % 
+      ((children.index(active) +
+       (direction == :next ? 1 : -1)) %
       children.size)
     children[new_idx]
   end
@@ -154,7 +152,7 @@ class Cursed::Window
   def update_attributes(offset: false, **attrs)
     attrs.each do |attr, val|
       val = offset ? send(attr) + val.to_i : val
-      instance_variable_set("@auto_#{attr}", val) 
+      instance_variable_set("@auto_#{attr}", val)
     end
   end
 
@@ -176,6 +174,7 @@ class Cursed::Window
     @cwindow.move(top, left)
     @cwindow.clear
     @cwindow.bkgd(1) # even background hack
+    fill_buffer if @buffer_proc
     print_buffer
     draw_border
     @cwindow.noutrefresh
@@ -190,7 +189,7 @@ class Cursed::Window
   end
 
   def draw_border
-    @cwindow.colorize(selected? && parent_selected? ? :red : @bc) do 
+    @cwindow.colorize(selected? && parent_selected? ? :red : @bc) do
       @border ? (@cwindow.box(?|, ?-); draw_title) : @cwindow.marker(?+)
     end
   end
@@ -201,7 +200,7 @@ class Cursed::Window
     write(0, left, title)
   end
 
-# flow 
+# flow
 
   def flow_dimension
     @flow_dimension ||= FLOW_DIMS[@flow]
@@ -216,7 +215,7 @@ class Cursed::Window
   end
 
   def reserved_space
-    visible_children.reduce(0) { |a,c| a + (c.send("fixed_#{flow_dimension}")|| 0) }
+    visible_children.reduce(0) { |a,c| a + (c.send("fixed_#{flow_dimension}") || 0) }
   end
 
   def autosizable_children
@@ -249,6 +248,10 @@ class Cursed::Window
 
 # printing
 
+  def fill_buffer
+    @buffer << variable_scope.instance_exec(&@buffer_proc)
+  end
+
   def print_buffer
     colorize(@fg) { @border ? print_buffer_in_border : print_buffer_no_border }
   end
@@ -267,10 +270,25 @@ class Cursed::Window
     @cwindow << @buffer.flush
   end
 
+  def variable_scope
+    @variable_scope ||= @parent && @parent.variable_scope
+  end
+
 private
 
   def decode_flow_attr(attr)
     attr == :size ? flow_dimension : flow_axis
+  end
+
+  def import_user_variables(variables)
+    variables.each do |name, val|
+      case val
+      when Proc
+        define_singleton_method(name, &val)
+      else
+        define_singleton_method(name) { val }
+      end
+    end
   end
 
 end

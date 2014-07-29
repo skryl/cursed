@@ -1,5 +1,3 @@
-require 'curses'
-
 class Curses::Window
   alias_method :height, :maxy
   alias_method :width,  :maxx
@@ -25,7 +23,7 @@ class Curses::Window
       normal:     Curses::A_NORMAL }
 
   def init_display
-    Curses.noecho        
+    Curses.noecho
     Curses.init_screen
     Curses.stdscr.keypad(true)
     Curses.start_color

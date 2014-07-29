@@ -1,36 +1,15 @@
-require 'benchmark'
-require_relative 'screen'
-require_relative 'window'
-
 class Cursed::WM < Cursed::Window
-  include Cursed
 
-  HEADER_HEIGHT = 5
-  FOOTER_HEIGHT = 4
+  attr_reader :mode, :header, :menu, :body, :screens
 
-  attr_reader :data, :mode, :step_time
+  def defaults
+    { window: Curses.stdscr, border: false }
+  end
 
-  def initialize(data, config)
-    super(window: Curses.stdscr, border: false)
-    @data = data
-    @step_time = 0.0
-    @mode = :normal
-
-    @header_content = config[:header] || {}
-    @keybindings    = config[:keybindings] || {}
-    @functions      = config[:functions] || []
-
-    @header  = Window.new(parent: self, title: 'Cortex v0.1', border: true, bc: :blue, fg: :yellow, height: HEADER_HEIGHT)
-    @body    = Window.new(parent: self, title: :body, border: false, exclusive: true,
-                 top: @header.top + @header.height, height: self.effective_height - @header.height)
-    @screens = config[:screens].map { |config|
-                 Screen.new(config, parent: @body, visible: false, border: false, flow: :horizontal)}
-    @menu    = Window.new(parent: self, title: :menu, border: true, visible: false, bc: :blue, fg: :yellow,
-                 height: FOOTER_HEIGHT, top: self.top + self.height - FOOTER_HEIGHT)
-
-    import_user_defined_functions
-    @screens.first.show
-    @screens.first.select
+  def initialize(config)
+    super(nil, config)
+    initialize_window_layout(config)
+    set_mode!(:normal)
   end
 
   def run
@@ -119,7 +98,44 @@ class Cursed::WM < Cursed::Window
     active_instrument.scroll(direction, opts)
   end
 
+  def variable_scope
+    self
+  end
+
 private
+
+# initialization
+
+  def initialize_window_layout(config)
+    # object creation order matters here (dont change!)
+    @header = Header.new(self, config[:header])
+    @body   = Body.new(self, config[:body])
+    @menu   = Menu.new(self, config[:menu])
+    @screens = config[:screens].map { |config| Screen.new(@body, config) }
+
+    @screens.first.show
+    @screens.first.select
+  end
+
+# screen refresh
+
+  def refresh
+    update_menu
+    super
+  end
+
+  def update_menu
+    @menu << (menu_mode? ?
+      "PANELS: #{hidden_children(active_screen)}\nINSTRUMENTS: #{hidden_children(active_panel)}" : '')
+  end
+
+# windows
+
+  def hidden_children(window)
+    window.hidden_children.map.with_index{ |c,i| "[#{i}](#{c.title})" }.join(' ')
+  end
+
+# keyboard input
 
   def react_to_input
     Curses.getch.tap do |input|
@@ -128,25 +144,9 @@ private
     end
   end
 
-  def refresh
-    @header.buffer.format_fields(header_attributes)
-    @menu << menu_content
-    super
-  end
-
-# user defined functions / bindings
-
-  def import_user_defined_functions
-    @functions.each do |fun, body|
-      define_singleton_method(fun, &body)
-    end
-  end
-
   def check_user_defined_bindings(input)
     @keybindings[input] && instance_exec(&@keybindings[input])
   end
-
-# default bindings
 
   def check_default_bindings(input)
     case @mode
@@ -168,7 +168,9 @@ private
       when ?n then show_screen(:right)
       when ?p then show_screen(:left)
       when ?q then throw(:exit)
-      when ?b then binding.pry
+      when ?b
+        Curses.close_screen
+        binding.pry
       end
     when :menu
       case input
@@ -196,35 +198,6 @@ private
       when ?q then exit
       end
     end
-  end
-
-# header / menu
-
-  # convert nested hash to [[Row, [[Field, Val], ...]] ... ]
-  # and evaluate any procs.
-  #
-  def header_attributes
-    @header_content.map { |row, fields|
-      [row, fields.map{ |field, val| [field, call_or_val(val)] }] }
-  end
-
-  def menu_content
-    case @mode
-    when :normal
-      ''
-    when :menu
-      "PANELS: #{hidden_children(active_screen)}\nINSTRUMENTS: #{hidden_children(active_panel)}"
-    end
-  end
-
-# helpers
-
-  def hidden_children(window)
-    window.hidden_children.map.with_index{ |c,i| "[#{i}](#{c.title})" }.join(' ')
-  end
-
-  def call_or_val(val)
-    val.is_a?(Proc) ? instance_exec(&val).to_s : val.to_s
   end
 
 end

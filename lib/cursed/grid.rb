@@ -13,7 +13,7 @@ class Cursed::Grid
   def_delegators :@window, :write, :colorize
   attr_reader    :rows, :cols, :rratio, :cratio, :cell_size, :box_size,
                  :vscroll, :hscroll, :cells
-  
+
   def initialize(window, **opts)
     @window = window
     @alt_fg = ALTERNATE_COLOR
@@ -43,18 +43,18 @@ class Cursed::Grid
       return if @data_rows < @rows
       @vscroll = [@vscroll + amt, @data_rows-@rows].min
     when :up
-      @vscroll = [@vscroll - amt, 0].max 
+      @vscroll = [@vscroll - amt, 0].max
     when :right
       return if @data_cols < @cols
       @hscroll = [@hscroll + amt, @data_cols-@cols].min
     when :left
-      @hscroll = [@hscroll - amt, 0].max 
+      @hscroll = [@hscroll - amt, 0].max
     end
   end
 
 private
 
-  def max_rows; height / @rratio - 1 end 
+  def max_rows; height / @rratio - 1 end
   def max_cols; width  / @cratio - 1 end
 
   def calc_dimensions(stream)
@@ -77,7 +77,6 @@ private
 
     streams.map do |stream|
       stream.map do |vals|
-        binding.pry if vals.is_a? String
         vals[@cols-1] = nil if vals.length < @cols; vals
       end
     end
@@ -90,7 +89,7 @@ private
     stream = stream.first.is_a?(Array) ?
       stream : stream.each_slice(@cols).to_a
 
-    stream[@vscroll...vscroll_end].flat_map do |r| 
+    stream[@vscroll...vscroll_end].flat_map do |r|
       r[@hscroll...hscroll_end]
     end
   end
@@ -98,11 +97,11 @@ private
   def fill(streams)
     stream1, stream2 = streams
     idx_start = @vscroll * @cols + @hscroll
-    @cells.each.with_index do |(r,c),i| 
+    @cells.each.with_index do |(r,c),i|
       val = format_val(stream1[i])
       clr = (stream2 && stream2[i] && !stream2[i].empty?) ? @alt_fg : @fg
 
-      if !val.empty? 
+      if !val.empty?
         colorize(clr, style: :underline) { write(r, c, val) }
       else
         colorize(@bg, style: :normal) { write(r, c, format_val(idx_start+i)) }
@@ -132,7 +131,7 @@ private
     write(row1, col1, PLS )
     write(row1, col2, PLS )
     write(row1, col1+1, (MNS * (width-2)) )
-    (1..height).each do |i| 
+    (1..height).each do |i|
       write(row1 + i, col1, BAR)
       write(row1 + i, col2, BAR)
     end

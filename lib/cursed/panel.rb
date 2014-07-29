@@ -1,12 +1,13 @@
-require_relative 'instrument'
-
 class Panel < Cursed::Window
-  include Cursed
 
-  def initialize(config, **opts)
-    super(config.merge(opts))
-    @instruments = config[:instruments].map { |config| Instrument.new(config, parent: self) }
+  def initialize(parent, params)
+    super
+    @instruments = params[:instruments].map { |config| Instrument.new(self, config) }
     visible_children.first.select
+  end
+
+  def defaults
+    { border: false }
   end
 
 end

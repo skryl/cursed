@@ -8,8 +8,15 @@ class Cursed::Buffer
     @content = ''
   end
 
-  def puts(str)
-    @content << str
+  def puts(obj)
+    case obj
+    when Hash
+      format_fields obj.map { |r, c| [r, c.map{ |c, val| [c, val] }] }
+    when Array
+      format_fields obj
+    else
+      @content << obj.to_s
+    end
   end
 
   alias_method :<<, :puts
@@ -41,7 +48,7 @@ class Cursed::Buffer
 
     @content = attributes.inject('') do |str, (row, fields)|
       str << "#{row.to_s.upcase}:".ljust(10)
-      fields.map { |name, val| str << "#{name}: #{val}".ljust(maxlen+2) << ' ' } 
+      fields.map { |name, val| str << "#{name}: #{val}".ljust(maxlen+2) << ' ' }
       str << "\n"
     end
   end

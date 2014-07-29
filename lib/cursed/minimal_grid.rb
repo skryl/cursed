@@ -1,9 +1,7 @@
-require_relative 'grid'
-
 class Cursed::MinimalGrid < Cursed::Grid
 
   CELL_SIZE = 2
-  
+
   def initialize(window, **opts)
     super(window, opts)
     @cell_size = opts[:cell_size] || CELL_SIZE
