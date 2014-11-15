@@ -2,11 +2,10 @@ class Cursed::Instrument < Cursed::Container
   extend  Forwardable
 
   def_delegators :@grid, :scroll
-  attr_reader :title
 
   def initialize(parent, params)
     super
-    @type    = params[:type]
+    @type    = params[:type] || :full
     @streams = params[:streams]
     @grid    = minimal? ?
         MinimalGrid.new(self, params) :
@@ -16,7 +15,7 @@ class Cursed::Instrument < Cursed::Container
   def minimal?; @type == :minimal end
 
   def streams
-    @streams.map { |stream| variable_scope.instance_exec(&stream) }
+    @streams.map { |stream| @variable_scope.deep_eval(stream) }
   end
 
   def refresh

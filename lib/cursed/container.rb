@@ -1,115 +1,184 @@
 class Cursed::Container
   include Cursed
   extend  Forwardable
-  def_delegators :@window, :write, :colorize
 
-  ATTRIBUTES    = [:height, :width, :top, :left].freeze
-  DEFAULT_SIZE  = { height: 3, width: 3, top: 0, left: 0 }.freeze
+  ATTRIBUTES    = [:height, :width, :top, :left            ].freeze
+  DEFAULT_SIZE  = { height: 3, width: 3, top: 0, left: 0   }.freeze
   BORDER_OFFSET = { height: -2, width: -2, top: 1, left: 1 }.freeze
-  FLOW_OFFSETS  = { vertical: :top, horizontal: :left}.freeze
-  FLOW_DIMS     = { vertical: :height, horizontal: :width }.freeze
-  FLOW_ATTRS    = [:size, :offset].freeze
+  FLOW_OFFSETS  = { vertical: :top, horizontal: :left      }.freeze
+  FLOW_DIMS     = { vertical: :height, horizontal: :width  }.freeze
+  FLOW_ATTRS    = [:size, :offset                          ].freeze
 
-  attr_reader   :parent, :buffer, :children, :title, :flow, :keybindings
+  attr_reader   :id, :parent, :children, :flow, :buffer
+  attr_reader   :variable_scope, :keybinding_scope
+  protected     :variable_scope, :keybinding_scope
+
   attr_accessor :fixed_height, :fixed_width, :fixed_top, :fixed_left
   attr_accessor :auto_height, :auto_width, :auto_top, :auto_left
+
+  def_predicates :visible, :selected, :focused, :focusable, :exclusive, :border
+
+  def_delegators :@window, :write, :colorize
   def_delegators :@buffer, :puts, :<<
 
-  def defaults; {} end
+  class NilParent
+    def nil?; true end
+    def not_focusable?; true end
+    def method_missing(method, *args, &blk); nil end
+  end
 
   def initialize(parent, params)
-    @parent      = parent
-    params       = defaults.merge(params || {})
+    params ||= {}
+    @parent = parent || NilParent.new
+    @class  = params[:class]
+
+    # TODO: is this bootstrapping necessary?
+    tmp_scope = Scope.new(self, @parent.variable_scope, params[:variables])
+    @styles   = tmp_scope.deep_eval((tmp_scope.styles || {})[@class] || {}, ignore: [:keybindings])
+    opts      = defaults.deep_merge(@styles).deep_merge(params)
 
     @children    = []
+    @focused     = false
+    @selected    = false
     @buffer      = Buffer.new(self)
-    @buffer_proc = params[:buffer]
-    @window     = params[:window]
-    @exclusive   = params[:exclusive].nil? ? false : params[:exclusive]
-    @border      = params[:border].nil? ? true : params[:border]
-    @flow        = params[:flow] || :vertical
-    @title       = params[:title] || :container
-    @visible     = params[:visible].nil? ? true : params[:visible]
-    @selected    = params[:selected].nil? ? false : params[:selected]
-    @keybindings = params[:keybindings] || []
+    @id          = opts[:id]
+    @name        = opts[:name]
+    @content     = opts[:content]
+    @window      = opts[:window]
+    @layout      = opts[:layout]      || []
+    @variables   = opts[:variables]   || []
+    @keybindings = opts[:keybindings] || []
+    @exclusive   = opts[:exclusive]   || false
+    @flow        = opts[:flow]        || :vertical
+    @fg          = opts[:fg]          || :white
+    @bg          = opts[:bg]          || :black
+    @bc          = opts[:bc]          || :blue
+    @sc          = opts[:sc]          || :red
+    @fc          = opts[:fc]          || :green
+    @border      = opts[:border].nil?    ? true : opts[:border]
+    @visible     = opts[:visible].nil?   ? true : opts[:visible]
+    @focusable   = opts[:focusable].nil? ? true : opts[:focusable]
 
-    # colors (foreground, background, border)
-    @fg  = params[:fg] || :white
-    @bg  = params[:bg] || :black
-    @bc  = params[:bc] || :blue
-
-    # bring variables into object scope
-    import_user_variables params[:variables] || []
+    @variable_scope   = Scope.new(self, @parent.variable_scope,   @variables)
+    @keybinding_scope = Scope.new(nil,  @parent.keybinding_scope, @keybindings)
 
     unless @window
       @fixed_height, @fixed_width, @fixed_top, @fixed_left = \
-        params.values_at(:height, :width, :top, :left)
+        opts.values_at(:height, :width, :top, :left)
       @window = Curses::Window.new(height, width, top, left)
     end
 
-    @parent.add_child(self) if @parent
+    @layout.map { |child| Container.build(self, child) }
+    @parent.add_child!(self)
+    @children.first.selected! if @children.any?
   end
 
-  def show
-    @visible = true
-    @parent.adjust_children
+  # support for different container types (ie. grid)
+  #
+  def self.build(parent, params)
+    params ||= {}
+    klass = Cursed.constantize(params[:class]) || self
+    klass.new(parent, params)
   end
 
-  def hide
-    @visible = false
-    @parent.adjust_children
-  end
-
-  def visible?; @visible end
-  def hidden?; !@visible end
-  def exclusive?; @exclusive end
-  def border?; @border end
-  def select; @selected = true end
-  def unselect; @selected = false end
-  def selected?; @selected end
-  def parent_selected?; @parent && @parent.selected? end
-
-# children
-
-  def add_child(child)
-    @children << child
-    adjust_children
-  end
+# collection helpers
 
   def visible_children
     @children.select(&:visible?)
   end
 
   def hidden_children
-    @children.select(&:hidden?)
+    @children.select(&:not_visible?)
   end
 
-  def active_child
-    visible_children.find(&:selected?)
+  def selected_child
+    @children.find(&:selected?)
   end
 
-  def hide_selected
-    active = active_child
-    select_child(:next)
-    active.hide
+  def focusable?;     @focusable && @children.any? end
+  def not_focusable?; !focusable? end
+
+# unsafe ops
+
+  def add_child!(child)
+    @children << child
   end
 
-  def select_child(direction)
-    active = active_child
-    valid_children = exclusive? ? children : visible_children
-    new_child = next_child(valid_children, active, direction)
-    active.hide    if exclusive?
-    active.unselect
-    new_child.show if exclusive?
-    new_child.select
+  def remove_child!(child)
+    @children.delete(child)
   end
 
-  def next_child(children, active, direction)
-    new_idx = \
-      ((children.index(active) +
-       (direction == :next ? 1 : -1)) %
-      children.size)
-    children[new_idx]
+  def select_child!(child)
+    selected_child.not_selected!
+    child.selected!
+  end
+
+  def swap_child!(child1, child2)
+    child1.not_visible!
+    child1.not_selected!
+    child2.visible!
+    child2.selected!
+  end
+
+# safe ops
+
+  def select_adjacent_child!(direction)
+    return false if visible_children.size < 2
+
+    idx = visible_children.index(selected_child)
+    dir = (direction == :next ? 1 : -1)
+    select_child!(visible_children.rotate(dir)[idx])
+  end
+
+  def smart_select_child!(direction, depth = 0)
+    required_flow, adjacent_direction = \
+      case direction
+      when :up    then [:vertical,   :prev]
+      when :down  then [:vertical,   :next]
+      when :left  then [:horizontal, :prev]
+      when :right then [:horizontal, :next]
+      end
+
+    if flow == required_flow && visible_children.size > 1
+      select_adjacent_child!(adjacent_direction)
+      depth.times { focus_in! }
+    else
+      focus_out!
+      parent.smart_select_child!(direction, depth + 1)
+    end
+  end
+
+  def hide_selected!
+    old_child = selected_child
+    select_adjacent_child!(:next)
+    old_child.not_visible!
+  end
+
+  def focus_in!
+    return false if selected_child.not_focusable?
+
+    not_focused!
+    selected_child.focused!
+  end
+
+  def focus_out!
+    return false if @parent.not_focusable?
+
+    not_focused!
+    @parent.focused!
+  end
+
+  def show_child!(container)
+    parent = container.parent
+    if parent.exclusive?
+      swap_child!(parent.selected_child, container)
+    else
+      container.visible!
+    end
+  end
+
+  def show_hidden_child(idx)
+    show_child!(hidden_children[idx])
   end
 
 # container attributes ie. height, width, top, left
@@ -117,12 +186,12 @@ class Cursed::Container
   def get_attribute(attr)
     instance_variable_get("@fixed_#{attr}") ||
     instance_variable_get("@auto_#{attr}")  ||
-    @parent && @parent.send("effective_#{attr}") ||
-    @window && @window.send(attr) || DEFAULT_SIZE[attr]
+    @parent.send("effective_#{attr}") ||
+    @window.send(attr) || DEFAULT_SIZE[attr]
   end
 
   def get_effective_attribute(attr)
-    get_attribute(attr) + (@border ? BORDER_OFFSET[attr] : 0)
+    get_attribute(attr) + (border? ? BORDER_OFFSET[attr] : 0)
   end
 
   # creates :height, :width, :top, :left and effective_* readers
@@ -157,16 +226,6 @@ class Cursed::Container
     end
   end
 
-# movement
-
-  def resize(params)
-    update_attributes(params)
-  end
-
-  def move(params)
-    update_attributes(params)
-  end
-
   # performs a quick refresh, must call refresh! to eventually draw to the
   # screen
   #
@@ -175,7 +234,7 @@ class Cursed::Container
     @window.move(top, left)
     @window.clear
     @window.bkgd(1) # even background hack
-    fill_buffer if @buffer_proc
+    buffer_content if @content.is_a?(Proc)
     print_buffer
     draw_border
     @window.noutrefresh
@@ -189,14 +248,31 @@ class Cursed::Container
     @window.refresh
   end
 
+  def resize(params)
+    update_attributes(params)
+  end
+
+  def move(params)
+    update_attributes(params)
+  end
+
   def draw_border
-    @window.colorize(selected? && parent_selected? ? :red : @bc) do
-      @border ? (@window.box(?|, ?-); draw_title) : @window.marker(?+)
+    @window.colorize(border_color) do
+      border? ? (@window.box(?|, ?-); draw_title) : @window.marker(?+)
+    end
+  end
+
+  def border_color
+    if selected? && @parent.focused?
+      @sc
+    elsif focused?
+      @fc
+    else @bc
     end
   end
 
   def draw_title
-    title = "[#{@title}]"
+    title = "[#{@name || @id}]"
     left = (width - title.length)/2
     write(0, left, title)
   end
@@ -216,32 +292,39 @@ class Cursed::Container
   end
 
   def reserved_space
-    visible_children.reduce(0) { |a,c| a + (c.send("fixed_#{flow_dimension}") || 0) }
+    (autoplaceable_children - autosizable_children).reduce(0) do |sum, c|
+      sum + (c.send("fixed_#{flow_dimension}") || 0)
+    end
   end
 
   def autosizable_children
-    visible_children.reject { |c| c.send("fixed_#{flow_dimension}")}
+    autoplaceable_children.reject { |c| c.send("fixed_#{flow_dimension}")}
+  end
+
+  def autoplaceable_children
+    visible_children.reject { |c| c.send("fixed_#{flow_axis}") }
   end
 
 # flow autosizing
 
-  def adjust_children
+  def adjust_children!
     autosize_children unless autosizable_children.empty?
     autoposition_children
+    children.each { |c| c.adjust_children! }
   end
 
   def autosize_children
     autosizable_count = autosizable_children.count
     new_size = flow_space.to_f / autosizable_count
-    size_fix = ((new_size % 1) * autosizable_count).to_i
     autosizable_children.each { |c| c.resize(flow_dimension => new_size.to_i) }
     # fix for odd flow space size
+    size_fix = ((new_size % 1) * autosizable_count).round
     autosizable_children.last.resize(
       flow_dimension => size_fix, offset: true) if new_size != new_size.to_i
   end
 
   def autoposition_children
-    visible_children.reduce(effective_flow_offset) do |offset, c|
+    autoplaceable_children.reduce(effective_flow_offset) do |offset, c|
       c.move(flow_axis => offset)
       offset + c.send(flow_dimension)
     end
@@ -249,12 +332,12 @@ class Cursed::Container
 
 # printing
 
-  def fill_buffer
-    @buffer << variable_scope.instance_exec(&@buffer_proc)
+  def buffer_content
+    @buffer << @variable_scope.deep_eval(@content)
   end
 
   def print_buffer
-    colorize(@fg) { @border ? print_buffer_in_border : print_buffer_no_border }
+    colorize(@fg) { border? ? print_buffer_in_border : print_buffer_no_border }
   end
 
   def print_buffer_in_border
@@ -271,25 +354,69 @@ class Cursed::Container
     @window << @buffer.flush
   end
 
-  def variable_scope
-    @variable_scope ||= @parent && @parent.variable_scope
+# keybindings
+
+  def react_to_input(input)
+    if @keybinding_scope.respond_to?(input)
+      @variable_scope.deep_eval(@keybinding_scope.send(:get_proc, input))
+    end
+  end
+
+# global state
+
+  def in_focus
+    all_containers.find { |c| c.focused? }
+  end
+
+  def find_container(id)
+    all_containers.find { |c| c.id.to_s == id.to_s }
+  end
+
+  def root
+    @parent.root || self
+  end
+
+  def first_leaf
+    if visible_children.any?
+      visible_children.first.first_leaf
+    else self
+    end
+  end
+
+  def flatten_tree
+    if children.any?
+      children.flat_map(&:flatten_tree).unshift(self)
+    else self
+    end
   end
 
 private
+
+  def all_containers
+    @all ||= root.flatten_tree
+  end
 
   def decode_flow_attr(attr)
     attr == :size ? flow_dimension : flow_axis
   end
 
-  def import_user_variables(variables)
-    variables.each do |name, val|
-      case val
-      when Proc
-        define_singleton_method(name, &val)
-      else
-        define_singleton_method(name) { val }
-      end
-    end
+  def defaults
+    { visible: true,
+      keybindings: {
+        'k' => -> { select_adjacent_child!(:prev) if flow == :vertical   },
+        'j' => -> { select_adjacent_child!(:next) if flow == :vertical   },
+        'l' => -> { select_adjacent_child!(:prev) if flow == :horizontal },
+        'h' => -> { select_adjacent_child!(:next) if flow == :horizontal },
+        'K' => -> { smart_select_child!(:up)    },
+        'J' => -> { smart_select_child!(:down)  },
+        'L' => -> { smart_select_child!(:right) },
+        'H' => -> { smart_select_child!(:left)  },
+        'i' => -> { focus_in!  },
+        'o' => -> { focus_out! },
+        'x' => -> { hide_selected!},
+        'q' => -> { throw(:exit)  },
+        'b' => -> { Curses.close_screen; binding.pry }
+    }}
   end
 
 end
