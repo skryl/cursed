@@ -4,7 +4,7 @@ Cursed is a curses based window manager for displaying large amounts of tabular 
 
 ## Screenshots
 
-<img src="https://dl.dropbox.com/s/dppgslkll7xqac9/cursed_anim.gif" alt="Animation" style="width: 600px;"/>
+<img src="cursed.gif" alt="Animation" style="width: 600px;"/>
 
 ## Installation
 

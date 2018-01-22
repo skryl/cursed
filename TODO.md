@@ -1,2 +1,3 @@
 # TODO
-- make header/footer/menu more flexible
+- turn grids into real elements
+- fix bugs

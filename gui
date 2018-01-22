@@ -1,0 +1,89 @@
+#!/usr/bin/env ruby
+require 'bundler/setup'
+require 'benchmark'
+Bundler.require(:default)
+
+CURSED_CONFIG = {
+  keybindings: {
+    ' ' => lambda { step },
+    'f' => lambda { step(10) },
+    'F' => lambda { step(100) },
+    'm' => lambda { toggle_container(:menu) },
+    't' => lambda { toggle_container(:head) },
+    ')' => lambda { show_child!(find_container 0) },
+    '!' => lambda { show_child!(find_container 1) },
+    '0' => lambda { show_hidden_child!(0) },
+    '1' => lambda { show_hidden_child!(1) },
+    '2' => lambda { show_hidden_child!(2) },
+    '3' => lambda { show_hidden_child!(3) },
+    '4' => lambda { show_hidden_child!(4) },
+    '5' => lambda { show_hidden_child!(5) },
+    '6' => lambda { show_hidden_child!(6) },
+    '7' => lambda { show_hidden_child!(7) },
+    '8' => lambda { show_hidden_child!(8) },
+    '9' => lambda { show_hidden_child!(9) }
+  },
+
+  variables: {
+    toggle_container: ->(container) {
+      container = find_container(container)
+      container.visible? ?
+        container.not_visible! :
+        container.visible!
+    },
+
+    hidden_children_for_container: -> {
+      in_focus.hidden_children.map.with_index{ |c,i| "[#{i}](#{c.id})" }.join(' ')
+    },
+
+    styles: {
+      head:        { border: true, height: 5, bc: :blue, fg: :yellow },
+      body:        { border: true, exclusive: true },
+      menu:        { border: true, bc: :blue, fg: :yellow, height: 4 },
+
+      screen:      { visible: false, true: false, flow: :horizontal },
+      left_panel:  { border: true },
+      right_panel: { border: true },
+      instrument:  { border: true }
+    },
+  },
+
+  layout: [
+    { id: :head, class: :head, name: 'Cortex 0.01', content: -> {
+      { status: { screen: 0, cycles: 0, cells: 0 }}
+    }},
+
+    { id: :body, class: :body, layout: [
+      { id: 0, class: :screen, visible: true, layout: [
+        { id: :activity0, class: :left_panel, layout: [
+
+          {id: :inputs, class: :instrument, fg: :red, bg: :green,
+           streams: [->(){[1,2,3]}] }
+        ]},
+        { id: :overlap0, class: :right_panel, layout: [
+
+          {id: :overlap, class: :instrument, fg: :green, bg: :yellow, cell_size: 5,
+           streams: [->(){[1,2,3]}] },
+
+          {id: :min_local_activity, class: :instrument, fg: :blue, bg: :green, cell_size: 5,
+           streams: [->(){[1,2,3]}] }
+        ]}
+      ]},
+      { id: 1, class: :screen, layout: [
+        { id: :activity1, class: :left_panel, layout: [
+
+          {id: :inputs, class: :instrument, fg: :red, bg: :green,
+           streams: [->(){[1,2,3]}] }
+        ]},
+        { id: :overlap1, class: :right_panel, layout: [
+
+          {id: :min_local_activity, class: :instrument, fg: :blue, bg: :green, cell_size: 5,
+           streams: [->(){[1,2,3]}] }
+        ]}
+      ]}
+    ]},
+
+    { id: :menu, class: :menu, content: -> { "HIDDEN: #{hidden_children_for_container}" }}
+  ]}
+
+Cursed::WM.new(CURSED_CONFIG).run
